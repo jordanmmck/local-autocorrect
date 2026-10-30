@@ -1,0 +1,43 @@
+# Informal words and profanity that SCOWL leaves out. People swear in their
+# notes and journals; autocorrect should fix "fuckign" to "fucking", never
+# "ducking". Every word here is known and can be proposed as a correction.
+# One lowercase word per line.
+badass
+badasses
+batshit
+apeshit
+bitchin
+clusterfuck
+clusterfucks
+cuz
+damnit
+dipshit
+dipshits
+douchebag
+douchebags
+douchey
+dumbass
+dumbasses
+fuckery
+fuckface
+fuckin
+fucktard
+fuckup
+fuckups
+fuckwit
+fuckwits
+goddamnit
+haha
+hahaha
+halfassed
+hardass
+kickass
+mindfuck
+motherfuckin
+pissy
+shitfaced
+shitpost
+shitposting
+shitshow
+shitstorm
+smartass

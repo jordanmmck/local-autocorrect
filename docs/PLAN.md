@@ -2,12 +2,18 @@
 
 The project's working outline. It is a starting point, not a spec. Revise it as benchmarks and real use teach us more.
 
+## Scope
+
+**This is autocorrect for writing prose:** notes, journals and ideas, written in VS Code as Markdown or plain text. It is not a code tool. Code already has its own completion and linting, and correcting code has different requirements. VS Code is just where the writing happens today, and the engine is kept editor-agnostic so it can follow the writing elsewhere (e.g. a system-wide macOS app). It doesn't have to be good at everything, only at natural-language writing.
+
+**Swearing is vocabulary.** Nobody wants to type the f-word and get "ducking". Profanity is never corrected away, and typos of swear words are fixed like any other typo (`fuckign` → `fucking`). Missing informal words go in `packages/core/lexicon/informal.txt`.
+
 ## Status
 
 | Milestone | State |
 |---|---|
 | 1. Deterministic autocorrect | **Done.** Dictionary + typo table + noisy-channel ranking. Unit and VS Code integration tests. |
-| 2. Safety and personalisation | **Partly done.** Custom dictionary, per-session suppression of reverted corrections, Markdown code and URL/path protection, language allowlist. Still to do: workspace and filetype exclusions, comments and docstrings in source files, a default keybinding for toggling. |
+| 2. Safety and personalisation | **Partly done.** Custom dictionary, per-session suppression of reverted corrections, Markdown code and URL/path protection, language allowlist. Profanity and informal words are supported. Still to do: workspace exclusions and a default keybinding for toggling. |
 | 3. Context-aware local model | Not started. |
 | 4. Benchmarks and evaluation | **Seeded.** `npm run bench` reports precision, recall, false corrections per 1,000 words and latency on small hand-written and synthetic sets. Needs a larger, more realistic dataset. |
 
@@ -43,14 +49,13 @@ It should eventually handle context-dependent errors: `I don't thing this is goi
 ## Milestone 2: Safety and personalisation
 
 - User dictionary and protected terms.
-- Configurable filetype and workspace exclusions.
+- Configurable workspace exclusions. Language selection already exists through `autocorrect.languages`.
 - A shortcut that disables the extension.
 - No corrections inside code fences, URLs, paths and similar structured text.
-- Optional support for comments and documentation strings in source files, detected syntax-aware where practical. A word-looking sequence in source code is never assumed to be prose.
 - Rejected-correction tracking, so an unwanted change is not repeated.
 - No persistent storage of raw typing history.
 
-Possible settings: `autocorrect.engine` (`"dictionary"` or a model backend), `autocorrect.enableInCodeComments`, `autocorrect.showNotifications`.
+Possible settings: `autocorrect.engine` (`"dictionary"` or a model backend), `autocorrect.showNotifications`.
 
 ## Milestone 3: Context-aware local model
 
@@ -78,6 +83,7 @@ The dataset should cover:
 - missing spaces
 - real-word substitutions
 - proper nouns and technical vocabulary
+- informal writing and profanity
 - sentences that need no change
 
 Measure:
@@ -105,5 +111,5 @@ Minimising false corrections comes before maximising recall. No user text is col
 - Sentence autocomplete
 - Translation
 - Dictation
-- Edits inside code identifiers
+- Correcting source code, including comments, docstrings and identifiers
 - VS Code chat inputs and webviews

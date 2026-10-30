@@ -37,10 +37,11 @@ export function isSentenceStart(before: string): boolean {
 
 /**
  * Lowercase words that are fine as written even though the dictionary does
- * not know them. Mostly technical and internet vocabulary that is often
- * typed in prose.
+ * not know them: chat shorthand, plus technical vocabulary that often turns
+ * up in notes.
  */
 export const PROTECTED_WORDS = new Set([
+  'afaik', 'btw', 'fwiw', 'idk', 'imho', 'imo', 'irl', 'lmao', 'omg', 'smh', 'wtf',
   'api', 'apis', 'async', 'auth', 'backend', 'bool', 'cli', 'config', 'configs', 'const', 'css', 'dev', 'devs',
   'diff', 'dns', 'env', 'eslint', 'faq', 'frontend', 'func', 'github', 'gitlab', 'html', 'http', 'https', 'ide',
   'impl', 'init', 'io', 'js', 'json', 'jsx', 'lol', 'markdown', 'npm', 'ok', 'onboarding', 'param', 'params', 'pnpm', 'readme',

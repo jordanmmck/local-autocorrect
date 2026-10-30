@@ -2,6 +2,8 @@
 
 A free, open-source VS Code extension that fixes typos as you type: smartphone-style autocorrect for desktop text editing. You type fast and sloppy, and the text comes out spelled correctly. You don't press Tab, nothing pops up, and nothing leaves your machine.
 
+It is built for **writing prose**: notes, journals and ideas drafted in Markdown or plain text. It is not for code. Code already has its own tooling, and correcting it is a different problem.
+
 ```text
 you type:   I thnk taht this woudl be a graet way to imprvoe things.
 you get:    I think that this would be a great way to improve things.
@@ -13,6 +15,7 @@ you get:    I think that this would be a great way to improve things.
 
 - **Automatic.** Corrections apply when you finish a word, with no confirmation.
 - **Conservative.** If a typo is ambiguous it is left alone. A false correction is worse than a missed one.
+- **Your vocabulary, swearing included.** `fuckign` becomes `fucking`, never `ducking`. Profanity is ordinary vocabulary here: it is never corrected away, and typos of swear words are fixed like any other typo.
 - **Local.** No network calls and no telemetry. Typing history is never stored.
 - **Invisible.** No ghost text, popups or underlines. The only UI is a status-bar toggle.
 - **Reversible.** One undo reverts a correction, and that correction is never made again in the session.
@@ -79,7 +82,7 @@ Keeping the engine separate from VS Code means it can later back a system-wide m
 1. A small hand-written [typo table](packages/core/src/typos.ts) of frequent, unambiguous slips (`teh`, `thnk`, `dont` → `don't`).
 2. A noisy-channel ranking ([spelling.ts](packages/core/src/spelling.ts)). Every dictionary word one typing slip away is scored by *how likely that slip is* × *how common the word is*. Transpositions, doubled letters and adjacent-key hits on a QWERTY layout count as likely slips. A non-adjacent substitution counts as unlikely. The winner must have at least 75% of the total candidate score and clear an absolute minimum, or nothing happens.
 
-**Lexicon.** About 115k words. Validity comes from [SCOWL](http://wordlist.aspell.net/) (via `wordlist-english`, US + common English, sizes 10–70) and frequency from [SUBTLEX-US](https://www.ugent.be/pp/experimentele-psychologie/en/research/documents/subtlexus) (via `subtlex-word-frequencies`). `npm run build` generates `packages/core/data/en-US.tsv` from those packages. The extension loads it once at startup.
+**Lexicon.** About 115k words. Validity comes from [SCOWL](http://wordlist.aspell.net/) (via `wordlist-english`, US + common English, sizes 10–70) and frequency from [SUBTLEX-US](https://www.ugent.be/pp/experimentele-psychologie/en/research/documents/subtlexus) (via `subtlex-word-frequencies`). SCOWL leaves out a lot of informal words and profanity. [lexicon/informal.txt](packages/core/lexicon/informal.txt) adds them back (`clusterfuck`, `shitshow`, `dumbass`, `haha`, …). `npm run build` generates `packages/core/data/en-US.tsv` from all three sources. The extension loads it once at startup.
 
 **Applying the edit.** The edit is a minimal `TextEditor.edit` replacement of just the word, with undo stops on both sides. The extension host is told about a typed character before it learns the cursor moved, so the controller waits for the selection update. Before editing, it re-checks that the word is unchanged and that there is still exactly one empty cursor at or after the boundary character. If you type quickly and the editor rejects the edit as stale, it re-checks and tries once more. The extension's own edits replace a non-empty range, so they can never look like a typed boundary character and re-trigger correction.
 
@@ -99,10 +102,10 @@ Current numbers on an M-series Mac:
 
 | | conservative (default) | balanced |
 |---|---|---|
-| Hand-written typos (44): recall / precision | 88.6% / 100% | 97.7% / 97.7% |
+| Hand-written typos (50): recall / precision | 90.0% / 100% | 98.0% / 98.0% |
 | Synthetic single-slip typos (2,000): recall / precision | 87.0% / 96.9% | 90.0% / 94.8% |
-| False corrections per 1,000 words of clean text | 0 (372 words) | 0 (372 words) |
-| Median / p95 engine time per word | 0.05 / 0.10 ms | 0.06 / 0.11 ms |
+| False corrections per 1,000 words of clean text | 0 (411 words) | 0 (411 words) |
+| Median / p95 engine time per word | 0.06 / 0.12 ms | 0.07 / 0.14 ms |
 
 These are small, partly synthetic datasets. The synthetic typos use the same slip types the engine models, so they flatter recall. Treat the numbers as a regression check, not a quality claim. A larger and more honest evaluation set is Milestone 4.
 
@@ -111,6 +114,7 @@ These are small, partly synthetic datasets. The synthetic typos use the same sli
 Verified by the integration suite in VS Code 1.144 on macOS:
 
 - The acceptance cases (`teh`, `recieve`, `thnk`, `I woudl go` are fixed; `Ethereum`, `useState` and `https://example.com` are untouched) are corrected or left alone as expected.
+- `fuckign` is corrected to `fucking`, and a correctly typed `fucking` is left alone.
 - The cursor stays after the corrected word when the word's length changes.
 - Corrections keep up with fast typing.
 - Corrections work mid-line.
@@ -132,7 +136,7 @@ Not verified:
 - **IME and snippets can't be detected** through the extension API. IME commits usually insert several characters at once, which never triggers a correction, but this hasn't been tested.
 - **Contractions and hyphenated words are skipped** apart from a few typo-table entries (`dont` → `don't`).
 - **Suppression is per session.** Reverted words become correctable again after a reload. Use *Add Word to Dictionary* to make it permanent.
-- **Source files are not supported yet.** Correcting comments and docstrings is planned (Milestone 2).
+- **Prose only, by design.** Only Markdown and plain text are enabled by default. Source code, including comments and docstrings, is out of scope.
 - Words missing from SCOWL that are close to a common word could still be miscorrected. Please report them.
 
 ## Licence

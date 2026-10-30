@@ -45,6 +45,26 @@ describe('dictionary corrections', () => {
   });
 });
 
+describe('profanity', () => {
+  const e = engine();
+  test('swear words are never corrected away', () => {
+    for (const w of ['fuck', 'fucking', 'fuckin', 'shit', 'bullshit', 'asshole', 'motherfucker', 'goddamn', 'clusterfuck', 'shitshow', 'dumbass']) {
+      assert.equal(correctLast(e, `a ${w}`), undefined, w);
+    }
+  });
+  for (const [typo, expected] of [
+    ['fuckign', 'fucking'],
+    ['fukcing', 'fucking'],
+    ['fcuk', 'fuck'],
+    ['shti', 'shit'],
+    ['bullshti', 'bullshit'],
+    ['assohle', 'asshole'],
+    ['motherfukcer', 'motherfucker'],
+  ]) {
+    test(`${typo} -> ${expected}`, () => assert.equal(correctLast(e, `a ${typo}`), expected));
+  }
+});
+
 describe('case handling', () => {
   const e = engine();
   test('capitalised at sentence start keeps capital', () => assert.equal(correctLast(e, 'Teh'), 'The'));

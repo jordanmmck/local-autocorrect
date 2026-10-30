@@ -60,6 +60,7 @@ suite('Autocorrect in a real editor', () => {
     ['Teh end', 'The end'],
     ['teh, ', 'the, '],
     ['done teh.\n', 'done the.\n'],
+    ['what the fuckign hell', 'what the fucking hell'],
   ]) {
     test(`${JSON.stringify(input)} -> ${JSON.stringify(expected)}`, async () => {
       const editor = await open();
@@ -68,7 +69,7 @@ suite('Autocorrect in a real editor', () => {
     });
   }
 
-  for (const input of ['Ethereum ', 'useState ', 'https://example.com ', 'see Teh ', 'TEH ', 'teh']) {
+  for (const input of ['fucking ', 'Ethereum ', 'useState ', 'https://example.com ', 'see Teh ', 'TEH ', 'teh']) {
     test(`${JSON.stringify(input)} is left alone`, async () => {
       const editor = await open();
       await type(input);
