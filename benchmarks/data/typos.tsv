@@ -1,0 +1,46 @@
+# typo	expected	category
+# Hand-written. Categories: transposition, omission, duplication, adjacent-key, insertion, phonetic, missing-space
+teh	the	transposition
+adn	and	transposition
+taht	that	transposition
+woudl	would	transposition
+becuase	because	transposition
+probelm	problem	transposition
+fiel	file	transposition
+chagne	change	transposition
+reqiure	require	transposition
+langauge	language	transposition
+whihc	which	transposition
+thnk	think	omission
+becuse	because	omission
+mesage	message	omission
+problm	problem	omission
+diferent	different	omission
+enviroment	environment	omission
+govenment	government	omission
+probaly	probably	omission
+importnt	important	omission
+thhe	the	duplication
+reallly	really	duplication
+aand	and	duplication
+somee	some	duplication
+whenn	when	duplication
+thw	the	adjacent-key
+wprd	word	adjacent-key
+helko	hello	adjacent-key
+documrnt	document	adjacent-key
+qiuck	quick	transposition
+ptoblem	problem	adjacent-key
+grwat	great	adjacent-key
+peoppe	people	adjacent-key
+thinkg	think	insertion
+wordd	word	duplication
+sentance	sentence	phonetic
+seperate	separate	phonetic
+definately	definitely	phonetic
+recieve	receive	phonetic
+occured	occurred	phonetic
+independant	independent	phonetic
+existance	existence	phonetic
+ofthe	of the	missing-space
+tothe	to the	missing-space

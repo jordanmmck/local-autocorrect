@@ -1,0 +1,104 @@
+{
+  "name": "local-autocorrect",
+  "displayName": "Local Autocorrect",
+  "description": "Silently fixes typos as you type. Runs entirely on your machine.",
+  "version": "0.1.0",
+  "publisher": "jordanmmck",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jordanmmck/local-autocorrect.git",
+    "directory": "apps/vscode"
+  },
+  "private": true,
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "autocorrect",
+    "spelling",
+    "typo",
+    "markdown"
+  ],
+  "main": "./dist/extension.js",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "autocorrect.toggle",
+        "title": "Toggle Autocorrect",
+        "category": "Autocorrect"
+      },
+      {
+        "command": "autocorrect.revertLastCorrection",
+        "title": "Revert Last Correction",
+        "category": "Autocorrect"
+      },
+      {
+        "command": "autocorrect.addToDictionary",
+        "title": "Add Word to Dictionary",
+        "category": "Autocorrect"
+      }
+    ],
+    "configuration": {
+      "title": "Autocorrect",
+      "properties": {
+        "autocorrect.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically correct typos when a word is completed."
+        },
+        "autocorrect.mode": {
+          "type": "string",
+          "enum": [
+            "conservative",
+            "balanced"
+          ],
+          "enumDescriptions": [
+            "Only fix single-slip typos with a clear winner.",
+            "Also fix two-slip typos and closer calls. More fixes, more false corrections."
+          ],
+          "default": "conservative"
+        },
+        "autocorrect.languages": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "markdown",
+            "plaintext"
+          ],
+          "description": "Language IDs in which autocorrect is active."
+        },
+        "autocorrect.customDictionary": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Words that should never be corrected."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "node build.mjs",
+    "pretest": "npm run build -w @autocorrect/core && node build.mjs --tests",
+    "test": "node src/test/runTest.mts",
+    "package": "npm run build -w @autocorrect/core && node build.mjs && vsce package --no-dependencies"
+  },
+  "devDependencies": {
+    "@autocorrect/core": "*",
+    "@types/mocha": "^10.0.10",
+    "@types/vscode": "^1.90.0",
+    "@vscode/test-electron": "^3.1.0",
+    "@vscode/vsce": "^4.1.0",
+    "mocha": "^12.0.3"
+  }
+}
