@@ -6,6 +6,8 @@ import type { Config } from './config.ts';
 const BOUNDARY = /^([ \t,;!?)\]}"]|\r?\n[ \t]*)$/;
 /** The word right before the cursor, plus any sentence punctuation typed after it. */
 const TRAILING_WORD = /([A-Za-z']+)([.,;:!?)\]}"'”’]*)$/;
+/** How long a correction stays underlined when `autocorrect.highlightCorrections` is on. */
+const HIGHLIGHT_MS = 3000;
 
 interface AppliedCorrection {
   document: vscode.TextDocument;
@@ -119,6 +121,7 @@ export class AutocorrectController implements vscode.Disposable {
           replacement: correction.replacement,
         };
         this.onDidCorrect.fire(correction);
+        if (this.#config.highlightCorrections) highlight(editor, this.#last.range, correction.original);
         return;
       }
     }
@@ -150,6 +153,18 @@ export class AutocorrectController implements vscode.Disposable {
       this.#last = undefined;
     }
   }
+}
+
+/** Briefly underlines a corrected word; hovering shows what was typed. */
+function highlight(editor: vscode.TextEditor, range: vscode.Range, original: string): void {
+  // One decoration type per correction, so overlapping highlights expire independently
+  // and VS Code keeps each range in place as the text around it changes.
+  const decoration = vscode.window.createTextEditorDecorationType({
+    textDecoration: 'underline dotted',
+    overviewRulerColor: new vscode.ThemeColor('editorInfo.foreground'),
+  });
+  editor.setDecorations(decoration, [{ range, hoverMessage: `Autocorrected from “${original}”` }]);
+  setTimeout(() => decoration.dispose(), HIGHLIGHT_MS);
 }
 
 /**

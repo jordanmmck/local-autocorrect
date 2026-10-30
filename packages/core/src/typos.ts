@@ -6,7 +6,7 @@
  * Every key must be a non-word and every value a dictionary word; a unit test
  * enforces this.
  */
-export const TYPO_TABLE: Readonly<Record<string, string>> = {
+const SLIPS: Readonly<Record<string, string>> = {
   abotu: 'about',
   acheive: 'achieve',
   acn: 'can',
@@ -22,10 +22,7 @@ export const TYPO_TABLE: Readonly<Record<string, string>> = {
   bewteen: 'between',
   coudl: 'could',
   definately: 'definitely',
-  didnt: "didn't",
-  doesnt: "doesn't",
   doign: 'doing',
-  dont: "don't",
   esle: 'else',
   ehre: 'here',
   eveyr: 'every',
@@ -35,7 +32,6 @@ export const TYPO_TABLE: Readonly<Record<string, string>> = {
   graet: 'great',
   hte: 'the',
   htis: 'this',
-  isnt: "isn't",
   jsut: 'just',
   knwo: 'know',
   konw: 'know',
@@ -58,7 +54,6 @@ export const TYPO_TABLE: Readonly<Record<string, string>> = {
   soem: 'some',
   taht: 'that',
   teh: 'the',
-  thats: "that's",
   thier: 'their',
   thign: 'thing',
   thigns: 'things',
@@ -69,7 +64,6 @@ export const TYPO_TABLE: Readonly<Record<string, string>> = {
   tothe: 'to the',
   truely: 'truly',
   untill: 'until',
-  wasnt: "wasn't",
   waht: 'what',
   whcih: 'which',
   wehn: 'when',
@@ -77,6 +71,55 @@ export const TYPO_TABLE: Readonly<Record<string, string>> = {
   wiht: 'with',
   wnat: 'want',
   woudl: 'would',
-  wouldnt: "wouldn't",
   yoru: 'your',
 };
+
+/**
+ * Contractions typed without the apostrophe. Keys are either not words at all
+ * or words so rare (by SUBTLEX frequency) that the contraction is almost
+ * always what was meant: "cant", "wont", "hes". Common words like "its",
+ * "were", "well", "ill", "lets" and "id" are deliberately absent.
+ */
+export const CONTRACTIONS: Readonly<Record<string, string>> = {
+  aint: "ain't",
+  arent: "aren't",
+  cant: "can't",
+  couldnt: "couldn't",
+  couldve: "could've",
+  didnt: "didn't",
+  doesnt: "doesn't",
+  dont: "don't",
+  hadnt: "hadn't",
+  hasnt: "hasn't",
+  havent: "haven't",
+  heres: "here's",
+  hes: "he's",
+  im: "I'm",
+  isnt: "isn't",
+  itll: "it'll",
+  ive: "I've",
+  mustnt: "mustn't",
+  neednt: "needn't",
+  shes: "she's",
+  shouldnt: "shouldn't",
+  shouldve: "should've",
+  thats: "that's",
+  theres: "there's",
+  theyll: "they'll",
+  theyre: "they're",
+  theyve: "they've",
+  wasnt: "wasn't",
+  werent: "weren't",
+  weve: "we've",
+  whats: "what's",
+  wheres: "where's",
+  whos: "who's",
+  wont: "won't",
+  wouldnt: "wouldn't",
+  wouldve: "would've",
+  youll: "you'll",
+  youre: "you're",
+  youve: "you've",
+};
+
+export const TYPO_TABLE: Readonly<Record<string, string>> = { ...SLIPS, ...CONTRACTIONS };

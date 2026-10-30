@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
 import { correctLast, engine, lexicon } from './helpers.ts';
-import { TYPO_TABLE } from '../src/typos.ts';
+import { CONTRACTIONS, TYPO_TABLE } from '../src/typos.ts';
 
 describe('MVP acceptance cases', () => {
   const e = engine();
@@ -99,14 +99,41 @@ describe('personalisation', () => {
 });
 
 describe('typo table', () => {
-  test('keys are non-words and values are words', () => {
+  test('slip keys are non-words and values are words', () => {
     for (const [typo, fix] of Object.entries(TYPO_TABLE)) {
-      if (fix.includes("'")) {
-        assert.equal(typo, fix.replace("'", ''), `${typo} should be ${fix} without its apostrophe`);
-        continue;
-      }
+      if (typo in CONTRACTIONS) continue;
       assert.ok(!lexicon.isKnown(typo), `${typo} is a real word`);
       for (const part of fix.split(' ')) assert.ok(lexicon.isKnown(part), `${part} is not in the lexicon`);
     }
+  });
+
+  test('contraction keys are the contraction minus its apostrophe, and rare as words', () => {
+    for (const [typo, fix] of Object.entries(CONTRACTIONS)) {
+      assert.equal(typo, fix.replace("'", '').toLowerCase());
+      assert.ok(lexicon.prior(typo) < 200, `${typo} is too common a word to replace`);
+    }
+  });
+
+  test('common words that look like contractions are left alone', () => {
+    const e = engine();
+    for (const w of ['its', 'were', 'well', 'ill', 'lets', 'hell', 'shell', 'id']) assert.equal(correctLast(e, `a ${w}`), undefined, w);
+  });
+});
+
+describe('the pronoun I', () => {
+  const e = engine();
+  test('i -> I', () => assert.equal(correctLast(e, 'and then i'), 'I'));
+  test('i before punctuation', () => assert.equal(e.check({ before: 'so ', word: 'i', after: ', ' })?.replacement, 'I'));
+  for (const [typed, expected] of [["i'm", "I'm"], ["i've", "I've"], ["i'll", "I'll"], ["i'd", "I'd"], ['im', "I'm"], ['ive', "I've"]]) {
+    test(`${typed} -> ${expected}`, () => assert.equal(correctLast(e, `so ${typed}`), expected));
+  }
+  test('Im at sentence start', () => assert.equal(correctLast(e, 'Im'), "I'm"));
+  test('(i) list markers are left alone', () => assert.equal(e.check({ before: 'see (', word: 'i', after: ') ' }), null));
+  test('i.e. is left alone', () => assert.equal(e.check({ before: 'i.', word: 'e', after: '. ' }), null));
+  test('other single letters are left alone', () => assert.equal(correctLast(e, 'plan a'), undefined));
+  test('a reverted i stays lowercase', () => {
+    const e2 = engine();
+    e2.suppress('i');
+    assert.equal(correctLast(e2, 'and i'), undefined);
   });
 });

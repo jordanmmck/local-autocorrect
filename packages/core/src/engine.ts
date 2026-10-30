@@ -19,6 +19,8 @@ const THRESHOLDS: Record<Mode, Thresholds> = {
 };
 
 const MAX_LENGTH = 30;
+/** The pronoun typed in lowercase, alone or with a contraction. */
+const I_PRONOUN = /^i('(m|ve|ll|d))?$/;
 
 export class AutocorrectEngine {
   #lexicon: Lexicon;
@@ -47,24 +49,33 @@ export class AutocorrectEngine {
 
   check({ before, word, after }: CorrectionRequest): Correction | null {
     const t = this.#thresholds;
-    if (word.length < t.minLength || word.length > MAX_LENGTH || !/^[A-Za-z]+$/.test(word)) return null;
+    if (I_PRONOUN.test(word)) return this.#capitaliseI(before, word, after);
+    const lower = word.toLowerCase();
+    const tabled = TYPO_TABLE[lower];
+    // Table entries may be short ("im"); everything else needs the minimum length.
+    if ((word.length < t.minLength && !tabled) || word.length > MAX_LENGTH || !/^[A-Za-z]+$/.test(word)) return null;
 
     const shape = caseShape(word);
     if (shape === 'upper' || shape === 'mixed') return null;
 
-    const lower = word.toLowerCase();
     if (this.#userWords.has(lower) || this.#suppressed.has(lower) || PROTECTED_WORDS.has(lower)) return null;
     if (!isStandaloneWord(before, after)) return null;
     // A capitalised unknown word mid-sentence is most likely a name.
     if (shape === 'capitalized' && !isSentenceStart(before)) return null;
 
-    const tabled = TYPO_TABLE[lower];
     if (tabled) return { original: word, replacement: applyCaseShape(tabled, shape), confidence: 0.99, source: 'typo-table' };
 
     if (this.#lexicon.isKnown(lower)) return null;
 
     const correction = this.#rank(lower, 1) ?? (t.maxDistance === 2 && lower.length >= 5 ? this.#rank(lower, 2) : null);
     return correction && { original: word, replacement: applyCaseShape(correction.word, shape), confidence: correction.confidence, source: 'dictionary' };
+  }
+
+  /** "i" -> "I", "i'm" -> "I'm", unless it looks like a list marker such as "(i)". */
+  #capitaliseI(before: string, word: string, after: string): Correction | null {
+    if (this.#suppressed.has(word) || this.#userWords.has(word) || !isStandaloneWord(before, after)) return null;
+    if (word === 'i' && before.endsWith('(') && after.startsWith(')')) return null;
+    return { original: word, replacement: 'I' + word.slice(1), confidence: 0.99, source: 'typo-table' };
   }
 
   /** The best candidate within `maxDistance` slips, if it clears the confidence thresholds. */

@@ -56,6 +56,7 @@ Plain <kbd>Cmd/Ctrl+Z</kbd> right after a correction undoes just the correction 
 | `autocorrect.mode` | `"conservative"` | `"balanced"` also fixes two-slip typos and closer calls. |
 | `autocorrect.languages` | `["markdown", "plaintext"]` | Language IDs to correct in. |
 | `autocorrect.customDictionary` | `[]` | Words that are never corrected. |
+| `autocorrect.highlightCorrections` | `false` | Underline each correction for 3 seconds. Hover over it to see what you typed. Useful while you're getting a feel for it. |
 
 ## How it works
 
@@ -79,7 +80,9 @@ Keeping the engine separate from VS Code means it can later back a system-wide m
 
 **Candidates.** A word that survives those checks and isn't in the dictionary goes through two steps:
 
-1. A small hand-written [typo table](packages/core/src/typos.ts) of frequent, unambiguous slips (`teh`, `thnk`, `dont` → `don't`).
+1. A small hand-written [typo table](packages/core/src/typos.ts) of frequent, unambiguous slips (`teh`, `thnk`), plus contractions typed without the apostrophe (`dont`, `im`, `youre`, `cant`). A contraction is only added when the apostrophe-less form is not a common word, so `its`, `were`, `well`, `ill`, `lets` and `id` are never changed.
+
+A lowercase `i` on its own, or `i'm`, `i've`, `i'll` and `i'd`, is capitalised. `(i)` list markers and `i.e.` are not.
 2. A noisy-channel ranking ([spelling.ts](packages/core/src/spelling.ts)). Every dictionary word one typing slip away is scored by *how likely that slip is* × *how common the word is*. Transpositions, doubled letters and adjacent-key hits on a QWERTY layout count as likely slips. A non-adjacent substitution counts as unlikely. The winner must have at least 75% of the total candidate score and clear an absolute minimum, or nothing happens.
 
 **Lexicon.** About 115k words. Validity comes from [SCOWL](http://wordlist.aspell.net/) (via `wordlist-english`, US + common English, sizes 10–70) and frequency from [SUBTLEX-US](https://www.ugent.be/pp/experimentele-psychologie/en/research/documents/subtlexus) (via `subtlex-word-frequencies`). SCOWL leaves out a lot of informal words and profanity. [lexicon/informal.txt](packages/core/lexicon/informal.txt) adds them back (`clusterfuck`, `shitshow`, `dumbass`, `haha`, …). `npm run build` generates `packages/core/data/en-US.tsv` from all three sources. The extension loads it once at startup.
@@ -105,7 +108,7 @@ Current numbers on an M-series Mac:
 | Hand-written typos (50): recall / precision | 90.0% / 100% | 98.0% / 98.0% |
 | Synthetic single-slip typos (2,000): recall / precision | 87.0% / 96.9% | 90.0% / 94.8% |
 | False corrections per 1,000 words of clean text | 0 (411 words) | 0 (411 words) |
-| Median / p95 engine time per word | 0.06 / 0.12 ms | 0.07 / 0.14 ms |
+| Median / p95 engine time per word | 0.06 / 0.12 ms | 0.07 / 0.13 ms |
 
 These are small, partly synthetic datasets. The synthetic typos use the same slip types the engine models, so they flatter recall. Treat the numbers as a regression check, not a quality claim. A larger and more honest evaluation set is Milestone 4.
 
@@ -115,6 +118,7 @@ Verified by the integration suite in VS Code 1.144 on macOS:
 
 - The acceptance cases (`teh`, `recieve`, `thnk`, `I woudl go` are fixed; `Ethereum`, `useState` and `https://example.com` are untouched) are corrected or left alone as expected.
 - `fuckign` is corrected to `fucking`, and a correctly typed `fucking` is left alone.
+- `so i think im done` becomes `so I think I'm done`.
 - The cursor stays after the corrected word when the word's length changes.
 - Corrections keep up with fast typing.
 - Corrections work mid-line.
@@ -134,7 +138,7 @@ Not verified:
 - **English (US) only**, QWERTY only.
 - **No context.** Real-word errors (`I don't thing this is going to word`) are not detected, and ambiguous typos (`tha`) are skipped. Context-aware ranking is Milestone 3.
 - **IME and snippets can't be detected** through the extension API. IME commits usually insert several characters at once, which never triggers a correction, but this hasn't been tested.
-- **Contractions and hyphenated words are skipped** apart from a few typo-table entries (`dont` → `don't`).
+- **Hyphenated words are skipped.** Contractions are only fixed when the apostrophe-less form isn't a real word, so a missing apostrophe in `its`, `were` or `well` won't be fixed.
 - **Suppression is per session.** Reverted words become correctable again after a reload. Use *Add Word to Dictionary* to make it permanent.
 - **Prose only, by design.** Only Markdown and plain text are enabled by default. Source code, including comments and docstrings, is out of scope.
 - Words missing from SCOWL that are close to a common word could still be miscorrected. Please report them.

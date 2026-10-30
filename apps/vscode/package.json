@@ -83,6 +83,11 @@
           },
           "default": [],
           "description": "Words that should never be corrected."
+        },
+        "autocorrect.highlightCorrections": {
+          "type": "boolean",
+          "default": false,
+          "description": "Briefly underline each correction. Hover over it to see what you typed."
         }
       }
     }

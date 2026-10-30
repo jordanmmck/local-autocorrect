@@ -13,7 +13,7 @@ The project's working outline. It is a starting point, not a spec. Revise it as 
 | Milestone | State |
 |---|---|
 | 1. Deterministic autocorrect | **Done.** Dictionary + typo table + noisy-channel ranking. Unit and VS Code integration tests. |
-| 2. Safety and personalisation | **Partly done.** Custom dictionary, per-session suppression of reverted corrections, Markdown code and URL/path protection, language allowlist. Profanity and informal words are supported. Still to do: workspace exclusions and a default keybinding for toggling. |
+| 2. Safety and personalisation | **Partly done.** Custom dictionary, per-session suppression of reverted corrections, Markdown code and URL/path protection, language allowlist. Profanity, informal words, `i` → `I` and apostrophe-less contractions are supported, and there is an opt-in highlight for corrections. Still to do: workspace exclusions and a default keybinding for toggling. |
 | 3. Context-aware local model | Not started. |
 | 4. Benchmarks and evaluation | **Seeded.** `npm run bench` reports precision, recall, false corrections per 1,000 words and latency on small hand-written and synthetic sets. Needs a larger, more realistic dataset. |
 
@@ -98,9 +98,11 @@ Measure:
 
 Minimising false corrections comes before maximising recall. No user text is collected automatically. Datasets must be synthetic, public, or opt-in.
 
-## Later UX ideas
+## Later ideas
 
-- Briefly underlining corrected words so they can be inspected.
+- Split run-together words (`thisis` → `this is`). This needs care around brand names like `youtube`.
+- Persist reverted corrections across sessions as an opt-in list of words rather than typing history.
+- Optional sentence-start capitalisation. Off by default, since some people journal in lowercase on purpose.
 
 ## Out of scope
 

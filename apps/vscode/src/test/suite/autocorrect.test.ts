@@ -50,6 +50,7 @@ suite('Autocorrect in a real editor', () => {
     await vscode.commands.executeCommand('workbench.action.closeAllEditors');
     await setConfig('enabled', undefined);
     await setConfig('customDictionary', undefined);
+    await setConfig('highlightCorrections', undefined);
   });
 
   for (const [input, expected] of [
@@ -61,6 +62,8 @@ suite('Autocorrect in a real editor', () => {
     ['teh, ', 'the, '],
     ['done teh.\n', 'done the.\n'],
     ['what the fuckign hell', 'what the fucking hell'],
+    ['so i think im done', "so I think I'm done"],
+    ['i dont know', "I don't know"],
   ]) {
     test(`${JSON.stringify(input)} -> ${JSON.stringify(expected)}`, async () => {
       const editor = await open();
@@ -142,6 +145,13 @@ suite('Autocorrect in a real editor', () => {
     assert.equal(vscode.workspace.getConfiguration('autocorrect').get('enabled'), false);
     await vscode.commands.executeCommand('autocorrect.toggle');
     assert.equal(vscode.workspace.getConfiguration('autocorrect').get('enabled'), true);
+  });
+
+  test('highlighting does not change the text', async () => {
+    await setConfig('highlightCorrections', true);
+    const editor = await open();
+    await type('teh ');
+    await textBecomes(editor, 'the ');
   });
 
   test('works in plaintext', async () => {

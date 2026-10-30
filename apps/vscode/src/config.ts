@@ -8,6 +8,7 @@ export interface Config {
   mode: Mode;
   languages: string[];
   customDictionary: string[];
+  highlightCorrections: boolean;
 }
 
 export function readConfig(): Config {
@@ -17,6 +18,7 @@ export function readConfig(): Config {
     mode: c.get<Mode>('mode', 'conservative'),
     languages: c.get('languages', ['markdown', 'plaintext']),
     customDictionary: c.get('customDictionary', []),
+    highlightCorrections: c.get('highlightCorrections', false),
   };
 }
 
