@@ -1,6 +1,6 @@
 # Plan
 
-The project's working outline. It is a starting point, not a spec. Revise it as benchmarks and real use teach us more.
+The project's working outline. It is a starting point, not a spec. Revise it as benchmarks and real use teach us more. Concrete next steps are tracked in [TODO.md](../TODO.md).
 
 ## Scope
 
@@ -97,12 +97,6 @@ Measure:
 - undo/rejection frequency
 
 Minimising false corrections comes before maximising recall. No user text is collected automatically. Datasets must be synthetic, public, or opt-in.
-
-## Later ideas
-
-- Split run-together words (`thisis` → `this is`). This needs care around brand names like `youtube`.
-- Persist reverted corrections across sessions as an opt-in list of words rather than typing history.
-- Optional sentence-start capitalisation. Off by default, since some people journal in lowercase on purpose.
 
 ## Out of scope
 
