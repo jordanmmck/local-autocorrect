@@ -17,7 +17,7 @@ you get:    I think that this would be a great way to improve things.
 - **Conservative.** If a typo is ambiguous it is left alone. A false correction is worse than a missed one.
 - **Your vocabulary, swearing included.** `fuckign` becomes `fucking`, never `ducking`. Profanity is ordinary vocabulary here: it is never corrected away, and typos of swear words are fixed like any other typo.
 - **Local.** No network calls and no telemetry. Typing history is never stored.
-- **Invisible.** No ghost text, popups or underlines. The only UI is a status-bar toggle.
+- **Quiet.** No ghost text, suggestion lists or popups. A corrected word gets a soft flash and a faint dotted underline, so you can tell what changed without being interrupted.
 - **Reversible.** One undo reverts a correction, and that correction is never made again in the session.
 
 ## Try it
@@ -50,13 +50,18 @@ code --install-extension apps/vscode/local-autocorrect-0.1.0.vsix
 
 Plain <kbd>Cmd/Ctrl+Z</kbd> right after a correction undoes just the correction and leaves the space or punctuation you typed. The word is then suppressed for the rest of the session.
 
+Corrected words briefly flash and then keep a faint dotted underline. Hover over one to see what you typed, and click **Revert** to restore it, even several sentences later. The underlines are kept in memory only and disappear when you close the document.
+
+![Hovering a corrected word shows the original and a Revert link](docs/images/cue-hover-dark.png)
+![Faint dotted underlines on corrected words, light theme](docs/images/cue-underline-light.png)
+
 | Setting | Default | |
 |---|---|---|
 | `autocorrect.enabled` | `true` | |
 | `autocorrect.mode` | `"conservative"` | `"balanced"` also fixes two-slip typos and closer calls. |
 | `autocorrect.languages` | `["markdown", "plaintext"]` | Language IDs to correct in. |
 | `autocorrect.customDictionary` | `[]` | Words that are never corrected. |
-| `autocorrect.highlightCorrections` | `false` | Underline each correction for 3 seconds. Hover over it to see what you typed. Useful while you're getting a feel for it. |
+| `autocorrect.correctionCue` | `"flashAndUnderline"` | How corrected words are marked: `"flashAndUnderline"`, `"underline"`, `"flash"` or `"none"`. |
 
 ## How it works
 

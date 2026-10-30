@@ -4,14 +4,14 @@ Small, concrete next steps. The bigger picture lives in [docs/PLAN.md](docs/PLAN
 
 ## Now
 
-- [ ] **Try it on real writing.** Install the extension (see the README) and journal with it for a few days. Turn on `autocorrect.highlightCorrections` so you can see what changes. Note anything that should go in the lists below:
+- [ ] **Try it on real writing.** Install the extension (see the README) and journal with it for a few days. Corrected words are underlined, so you can see what changed. Note anything that should go in the lists below:
   - words it changed that it shouldn't have (most important)
   - obvious typos it missed
   - whether one Cmd+Z feels right for undoing a correction
 
 ## Next
 
-- [ ] **Subtle visual cue for corrected text.** Make it easy to notice and check what was changed without being distracting. The current opt-in underline is a first pass.
+- [ ] **Tune the visual cue.** The default is a soft flash plus a faint dotted underline, with Revert in the hover. Decide whether it's too much or too little. Other ideas to try: an underline that fades after a minute, or a gutter dot per line.
 - [ ] **Run-together words:** `thisis` → `this is`. Needs care around brand names like `youtube`.
 - [ ] **Remember reverted corrections across sessions**, as an opt-in list of words. Never store typing history.
 - [ ] **Optional sentence-start capitalisation**, off by default. Some people journal in lowercase on purpose.
@@ -27,3 +27,4 @@ Small, concrete next steps. The bigger picture lives in [docs/PLAN.md](docs/PLAN
 - [x] Deterministic autocorrect baseline (Milestone 1)
 - [x] Profanity and informal words
 - [x] `i` → `I`, apostrophe-less contractions
+- [x] Visual cue for corrected words (flash, underline, hover with Revert)

@@ -1,21 +1,12 @@
 import * as vscode from 'vscode';
 import { isInsideMarkdownCode, type AutocorrectEngine, type Correction } from '@autocorrect/core';
 import type { Config } from './config.ts';
+import { CorrectionTracker, type TrackedCorrection } from './cue.ts';
 
 /** A single typed character (or Enter, with auto-indent) that completes the preceding word. */
 const BOUNDARY = /^([ \t,;!?)\]}"]|\r?\n[ \t]*)$/;
 /** The word right before the cursor, plus any sentence punctuation typed after it. */
 const TRAILING_WORD = /([A-Za-z']+)([.,;:!?)\]}"'”’]*)$/;
-/** How long a correction stays underlined when `autocorrect.highlightCorrections` is on. */
-const HIGHLIGHT_MS = 3000;
-
-interface AppliedCorrection {
-  document: vscode.TextDocument;
-  /** Range currently holding the replacement text. */
-  range: vscode.Range;
-  original: string;
-  replacement: string;
-}
 
 /**
  * Watches typing in the active editor and applies corrections at word
@@ -24,13 +15,15 @@ interface AppliedCorrection {
 export class AutocorrectController implements vscode.Disposable {
   #engine: AutocorrectEngine;
   #config: Config;
-  #last: AppliedCorrection | undefined;
+  #tracker: CorrectionTracker;
+  #last: TrackedCorrection | undefined;
   #subscription: vscode.Disposable;
   readonly onDidCorrect = new vscode.EventEmitter<Correction>();
 
   constructor(engine: AutocorrectEngine, config: Config) {
     this.#engine = engine;
     this.#config = config;
+    this.#tracker = new CorrectionTracker(config.correctionCue);
     this.#subscription = vscode.workspace.onDidChangeTextDocument((e) => this.#onChange(e));
   }
 
@@ -38,26 +31,36 @@ export class AutocorrectController implements vscode.Disposable {
     this.#config = config;
     this.#engine.setMode(config.mode);
     this.#engine.setUserWords(config.customDictionary);
+    this.#tracker.setStyle(config.correctionCue);
   }
 
-  get lastCorrection(): Readonly<AppliedCorrection> | undefined {
+  get lastCorrection(): Readonly<TrackedCorrection> | undefined {
     return this.#last;
   }
 
   /** Restores the original text of the most recent correction and stops making it. */
-  async revertLast(): Promise<boolean> {
-    const last = this.#last;
-    if (!last || last.document.isClosed || last.document.getText(last.range) !== last.replacement) return false;
-    this.#engine.suppress(last.original);
-    this.#last = undefined;
-    const edit = new vscode.WorkspaceEdit();
-    edit.replace(last.document.uri, last.range, last.original);
-    return vscode.workspace.applyEdit(edit);
+  revertLast(): Promise<boolean> {
+    return this.#revert(this.#last);
+  }
+
+  /** Restores a specific earlier correction (from the hover's Revert link) and stops making it. */
+  revertById(id: number): Promise<boolean> {
+    return this.#revert(this.#tracker.get(id));
   }
 
   dispose(): void {
     this.#subscription.dispose();
+    this.#tracker.dispose();
     this.onDidCorrect.dispose();
+  }
+
+  async #revert(entry: TrackedCorrection | undefined): Promise<boolean> {
+    if (!entry?.live || entry.document.isClosed || entry.document.getText(entry.range) !== entry.replacement) return false;
+    this.#engine.suppress(entry.original);
+    if (entry === this.#last) this.#last = undefined;
+    const edit = new vscode.WorkspaceEdit();
+    edit.replace(entry.document.uri, entry.range, entry.original);
+    return vscode.workspace.applyEdit(edit);
   }
 
   #onChange(e: vscode.TextDocumentChangeEvent): void {
@@ -114,14 +117,9 @@ export class AutocorrectController implements vscode.Disposable {
         undoStopAfter: true,
       });
       if (ok) {
-        this.#last = {
-          document: editor.document,
-          range: new vscode.Range(range.start, range.start.translate(0, correction.replacement.length)),
-          original: correction.original,
-          replacement: correction.replacement,
-        };
+        const replaced = new vscode.Range(range.start, range.start.translate(0, correction.replacement.length));
+        this.#last = this.#tracker.add(editor.document, replaced, correction.original, correction.replacement);
         this.onDidCorrect.fire(correction);
-        if (this.#config.highlightCorrections) highlight(editor, this.#last.range, correction.original);
         return;
       }
     }
@@ -153,18 +151,6 @@ export class AutocorrectController implements vscode.Disposable {
       this.#last = undefined;
     }
   }
-}
-
-/** Briefly underlines a corrected word; hovering shows what was typed. */
-function highlight(editor: vscode.TextEditor, range: vscode.Range, original: string): void {
-  // One decoration type per correction, so overlapping highlights expire independently
-  // and VS Code keeps each range in place as the text around it changes.
-  const decoration = vscode.window.createTextEditorDecorationType({
-    textDecoration: 'underline dotted',
-    overviewRulerColor: new vscode.ThemeColor('editorInfo.foreground'),
-  });
-  editor.setDecorations(decoration, [{ range, hoverMessage: `Autocorrected from “${original}”` }]);
-  setTimeout(() => decoration.dispose(), HIGHLIGHT_MS);
 }
 
 /**
