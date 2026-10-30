@@ -20,6 +20,7 @@ Small, concrete next steps. The bigger picture lives in [docs/PLAN.md](docs/PLAN
 ## Later
 
 - [ ] **A bigger, more realistic evaluation set** (Milestone 4): real typing errors, more clean prose, informal writing.
+- [ ] **Publish** once it has held up in real use: add an icon, `"preview": true` and a CHANGELOG, then publish to the VS Code Marketplace and Open VSX (for Cursor and VSCodium) from a GitHub Action when a release is tagged. Needs a Marketplace publisher (`jordanmmck`), an Open VSX account, and their tokens added as repo secrets.
 - [ ] **Context-aware correction** (Milestone 3): real-word errors like `I don't thing so` → `think`. Benchmark small local models before choosing one.
 
 ## Done
