@@ -3,6 +3,9 @@ dist/
 out/
 *.vsix
 .vscode-test/
-packages/core/data/
+# en-US.tsv is generated from npm packages (npm run build); bigrams-en.tsv is
+# committed because its source data is a one-off download (build-bigrams.mjs).
+packages/core/data/en-US.tsv
+packages/core/data/.cache/
 apps/macos/.build/
 apps/macos/build/

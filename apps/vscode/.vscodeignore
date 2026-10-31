@@ -1,6 +1,7 @@
 **
 !dist/extension.js
 !dist/en-US.tsv
+!dist/bigrams-en.tsv
 !dist/SCOWL-COPYRIGHT.txt
 !package.json
 !README.md

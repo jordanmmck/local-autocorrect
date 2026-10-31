@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
-import { correctLast, engine, lexicon } from './helpers.ts';
+import { bigrams, correctLast, engine, lexicon } from './helpers.ts';
+import { parseBigrams } from '../src/bigrams.ts';
 import { CONTRACTIONS, TYPO_TABLE } from '../src/typos.ts';
 
 describe('MVP acceptance cases', () => {
@@ -65,6 +66,58 @@ describe('aggressive mode', () => {
     // Each is one implausible edit away from a real word ("changeling", "Ethereal").
     assert.equal(correctLast(e, 'a changelog'), undefined);
     assert.equal(correctLast(e, 'Ethereum'), undefined);
+  });
+});
+
+describe('bigram context', () => {
+  const e = engine({ bigrams });
+
+  test('parseBigrams reads prev/word/ppm lines', () => {
+    const b = parseBigrams('as\twell\t12000\nper\tcapita\t500\n');
+    assert.equal(b.prob('as', 'well'), 0.012);
+    assert.equal(b.prob('per', 'capita'), 0.0005);
+    assert.equal(b.prob('as', 'capita'), 0);
+  });
+
+  test('context picks the word that fits the previous one', () => {
+    // Without context "we" outscores "well" and is rejected for being short.
+    assert.equal(correctLast(engine(), 'as wel'), undefined);
+    assert.equal(correctLast(e, 'as wel'), 'well');
+  });
+
+  test('context lifts a rare word over a common wrong candidate', () => {
+    // Without context "timeline" (prior 1) cannot clear the score floor.
+    const balanced = engine({ mode: 'balanced', bigrams });
+    assert.equal(correctLast(engine({ mode: 'balanced' }), 'a timelin'), undefined);
+    assert.equal(correctLast(balanced, 'a timelin'), 'timeline');
+  });
+
+  test('punctuation between the words breaks the context', () => {
+    assert.equal(engine({ bigrams }).check({ before: 'as. ', word: 'wel', after: ' ' }), null);
+  });
+
+  test('extra spaces and apostrophe words still extract the previous word safely', () => {
+    assert.equal(e.check({ before: 'as  ', word: 'wel', after: ' ' })?.replacement, 'well');
+    // "don't" is taken whole (never a bare "t"), finds no bigrams, and changes nothing.
+    assert.equal(e.check({ before: "don't ", word: 'wel', after: ' ' }), null);
+  });
+
+  test('context does not vouch for far-fetched candidates', () => {
+    // "sqlite" is two unlikely edits from "site"; a strong "the site" bigram must not make it win.
+    const balanced = engine({ mode: 'balanced', bigrams });
+    assert.equal(correctLast(balanced, 'the sqlite'), undefined);
+    assert.equal(correctLast(balanced, 'a graphql'), undefined);
+  });
+
+  test('context never creates corrections of valid words', () => {
+    for (const w of ['Ethereum', 'useState', 'the', 'than']) {
+      assert.equal(correctLast(engine({ mode: 'aggressive', bigrams }), `more ${w}`), undefined, w);
+    }
+  });
+
+  test('an engine without bigrams behaves as before', () => {
+    assert.equal(correctLast(engine(), 'as wel'), undefined);
+    assert.equal(correctLast(engine(), 'a becuse'), 'because');
   });
 });
 
