@@ -1,0 +1,17 @@
+# Typos whose correct fix depends on the preceding word.
+# before<TAB>typo<TAB>expected
+as 	wel	well
+makes 	sesne	sense
+a 	timelin	timeline
+the project 	timelin	timeline
+high 	entropyy	entropy
+per 	captia	capita
+vice 	vesra	versa
+peanut 	buttr	butter
+prime 	ministre	minister
+social 	mdeia	media
+the 	morgage	mortgage
+a rough 	estimte	estimate
+I would 	appreicate	appreciate
+sounds 	resonable	reasonable
+no 	lonegr	longer

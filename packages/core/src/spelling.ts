@@ -1,4 +1,4 @@
-import type { Lexicon } from './types.ts';
+import type { Bigrams, Lexicon } from './types.ts';
 
 const ALPHABET = 'abcdefghijklmnopqrstuvwxyz';
 const VOWELS = 'aeiou';
@@ -99,20 +99,36 @@ export interface Candidate {
   word: string;
   /** Channel weight of the slip that turns `word` into the typed text. */
   weight: number;
-  /** weight * lexicon prior. */
+  /** weight * prior, where context support raises the prior. */
   score: number;
 }
 
+/** The word preceding the typo, when bigram statistics are available for ranking. */
+export interface Context {
+  prev: string;
+  bigrams: Bigrams;
+}
+
+/**
+ * Pseudo-occurrences granted to a candidate certain to follow the previous
+ * word (scaled down by P(candidate | prev)). Context can only add evidence:
+ * an unseen pair leaves the unigram prior untouched, so sparse bigram data
+ * never penalises a good candidate. Calibrated in benchmarks/.
+ */
+export const CONTEXT_PRIOR = 20_000_000;
+
 /** Proposable dictionary words near `typed` (lowercase), best first. */
-export function rankCandidates(typed: string, lexicon: Lexicon, maxDistance: 1 | 2): Candidate[] {
+export function rankCandidates(typed: string, lexicon: Lexicon, maxDistance: 1 | 2, context?: Context): Candidate[] {
   const edits = edits1(typed);
   if (maxDistance === 2) {
     for (const [word, weight] of edits2(typed)) if (!edits.has(word)) edits.set(word, weight);
   }
   const candidates: Candidate[] = [];
   for (const [word, weight] of edits) {
-    const prior = lexicon.prior(word);
-    if (prior > 0) candidates.push({ word, weight, score: weight * prior });
+    let prior = lexicon.prior(word);
+    if (prior <= 0) continue;
+    if (context) prior += CONTEXT_PRIOR * context.bigrams.prob(context.prev, word);
+    candidates.push({ word, weight, score: weight * prior });
   }
   return candidates.sort((a, b) => b.score - a.score);
 }

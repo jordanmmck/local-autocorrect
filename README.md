@@ -92,7 +92,9 @@ Keeping the engine separate from VS Code means it can later back a system-wide m
 A lowercase `i` on its own, or `i'm`, `i've`, `i'll` and `i'd`, is capitalised. `(i)` list markers and `i.e.` are not.
 2. A noisy-channel ranking ([spelling.ts](packages/core/src/spelling.ts)). Every dictionary word one typing slip away is scored by *how likely that slip is* × *how common the word is*. Transpositions, doubled letters and adjacent-key hits on a QWERTY layout count as likely slips. A non-adjacent substitution counts as unlikely. The winner must have at least 75% of the total candidate score and clear an absolute minimum, or nothing happens.
 
-**Lexicon.** About 115k words. Validity comes from [SCOWL](http://wordlist.aspell.net/) (via `wordlist-english`, US + common English, sizes 10–70) and frequency from [SUBTLEX-US](https://www.ugent.be/pp/experimentele-psychologie/en/research/documents/subtlexus) (via `subtlex-word-frequencies`). SCOWL leaves out a lot of informal words and profanity. [lexicon/informal.txt](packages/core/lexicon/informal.txt) adds them back (`clusterfuck`, `shitshow`, `dumbass`, `haha`, …). `npm run build` generates `packages/core/data/en-US.tsv` from all three sources. The extension loads it once at startup.
+**Context.** The word before the typo sharpens the ranking ([bigrams.ts](packages/core/src/bigrams.ts)): a candidate that commonly follows it gets its prior raised in proportion to P(candidate | previous word), from a bundled table of 237k word pairs. Context only ever *adds* evidence — an unseen pair falls back to plain word frequency — so sparse data never vetoes a good fix. This is what lets `as wel` become `as well` (alone, `wel` is too close to `we`) and `a timelin` become `timeline` rather than `timely`. Punctuation between the words breaks the context.
+
+**Lexicon.** About 115k words. Validity comes from [SCOWL](http://wordlist.aspell.net/) (via `wordlist-english`, US + common English, sizes 10–70) and frequency from [SUBTLEX-US](https://www.ugent.be/pp/experimentele-psychologie/en/research/documents/subtlexus) (via `subtlex-word-frequencies`). SCOWL leaves out a lot of informal words and profanity. [lexicon/informal.txt](packages/core/lexicon/informal.txt) adds them back (`clusterfuck`, `shitshow`, `dumbass`, `haha`, …). `npm run build` generates `packages/core/data/en-US.tsv` from all three sources. The word-pair table (`packages/core/data/bigrams-en.tsv`, committed) is pruned from the [Google Web Trillion Word Corpus bigram counts published by Peter Norvig](https://norvig.com/ngrams/) to pairs of lexicon words ([build-bigrams.mjs](packages/core/scripts/build-bigrams.mjs)). The extension loads both once at startup.
 
 **Applying the edit.** The edit is a minimal `TextEditor.edit` replacement of just the word, with undo stops on both sides. The extension host is told about a typed character before it learns the cursor moved, so the controller waits for the selection update. Before editing, it re-checks that the word is unchanged and that there is still exactly one empty cursor at or after the boundary character. If you type quickly and the editor rejects the edit as stale, it re-checks and tries once more. The extension's own edits replace a non-empty range, so they can never look like a typed boundary character and re-trigger correction.
 
@@ -110,12 +112,13 @@ npm run bench
 
 Current numbers on an M-series Mac:
 
-| | conservative (default) | balanced |
-|---|---|---|
-| Hand-written typos (50): recall / precision | 90.0% / 100% | 98.0% / 98.0% |
-| Synthetic single-slip typos (2,000): recall / precision | 87.0% / 96.9% | 90.0% / 94.8% |
-| False corrections per 1,000 words of clean text | 0 (411 words) | 0 (411 words) |
-| Median / p95 engine time per word | 0.06 / 0.12 ms | 0.07 / 0.13 ms |
+| | conservative (default) | balanced | aggressive |
+|---|---|---|---|
+| Hand-written typos (54): recall / precision | 87.0% / 100% | 96.3% / 100% | 98.1% / 100% |
+| Synthetic single-slip typos (2,000): recall / precision | 87.0% / 96.7% | 89.6% / 94.3% | 89.6% / 94.3% |
+| Context-dependent typos (15): recall with / without bigrams | 86.7% / 40.0% | 86.7% / 60.0% | 100% / 86.7% |
+| False corrections per 1,000 words of clean text | 0 (411 words) | 0 (411 words) | 0 (411 words) |
+| Median / p95 engine time per word | 0.07 / 0.14 ms | 0.08 / 105 ms | 0.08 / 0.22 ms |
 
 These are small, partly synthetic datasets. The synthetic typos use the same slip types the engine models, so they flatter recall. Treat the numbers as a regression check, not a quality claim. A larger and more honest evaluation set is Milestone 4.
 
@@ -143,7 +146,7 @@ Not verified:
 ## Known limitations
 
 - **English (US) only**, QWERTY only.
-- **No context.** Real-word errors (`I don't thing this is going to word`) are not detected, and ambiguous typos (`tha`) are skipped. Context-aware ranking is Milestone 3.
+- **Context is one word deep.** The previous word helps rank candidates, but real-word errors (`I don't thing this is going to word`) are still never touched, and a typo that is itself a known-but-rare word (`tha`, `sens`) is skipped. Catching those needs a language model (Milestone 3).
 - **IME and snippets can't be detected** through the extension API. IME commits usually insert several characters at once, which never triggers a correction, but this hasn't been tested.
 - **Hyphenated words are skipped.** Contractions are only fixed when the apostrophe-less form isn't a real word, so a missing apostrophe in `its`, `were` or `well` won't be fixed.
 - **Suppression is per session.** Reverted words become correctable again after a reload. Use *Add Word to Dictionary* to make it permanent.
@@ -152,4 +155,4 @@ Not verified:
 
 ## Licence
 
-MIT. Bundled word data: SCOWL (permissive, notice shipped as `SCOWL-COPYRIGHT.txt` in the extension) and SUBTLEX-US frequencies (Brysbaert & New, 2009) via an ISC-licensed npm package. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+MIT. Bundled word data: SCOWL (permissive, notice shipped as `SCOWL-COPYRIGHT.txt` in the extension), SUBTLEX-US frequencies (Brysbaert & New, 2009) via an ISC-licensed npm package, and bigram counts from the Google Web Trillion Word Corpus as published by Peter Norvig. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

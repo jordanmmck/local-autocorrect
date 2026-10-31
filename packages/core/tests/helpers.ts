@@ -1,7 +1,8 @@
 import { readFileSync } from 'node:fs';
-import { AutocorrectEngine, parseLexicon, type EngineOptions } from '../src/index.ts';
+import { AutocorrectEngine, parseBigrams, parseLexicon, type EngineOptions } from '../src/index.ts';
 
 export const lexicon = parseLexicon(readFileSync(new URL('../data/en-US.tsv', import.meta.url), 'utf8'));
+export const bigrams = parseBigrams(readFileSync(new URL('../data/bigrams-en.tsv', import.meta.url), 'utf8'));
 
 export function engine(options?: EngineOptions) {
   return new AutocorrectEngine(lexicon, options);

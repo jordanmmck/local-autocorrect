@@ -21,7 +21,7 @@ Small, concrete next steps. The bigger picture lives in [docs/PLAN.md](docs/PLAN
 - [ ] **A bigger, more realistic evaluation set** (Milestone 4): real typing errors, more clean prose, informal writing.
 - [ ] **Speed up distance-2 candidate generation for long words.** `edits2` is O((26·length)²); on 15+ character words a single check can take ~100ms (see the rare-word benchmark's balanced p95). Prune the first edit by weight, or generate candidates from the lexicon instead.
 - [ ] **Publish** once it has held up in real use: add an icon, `"preview": true` and a CHANGELOG, then publish to the VS Code Marketplace and Open VSX (for Cursor and VSCodium) from a GitHub Action when a release is tagged. Needs a Marketplace publisher (`jordanmmck`), an Open VSX account, and their tokens added as repo secrets.
-- [ ] **Context-aware correction** (Milestone 3): real-word errors like `I don't thing so` → `think`. Benchmark small local models before choosing one.
+- [ ] **Real-word errors** (Milestone 3): `I don't thing so` → `think`. Bigram ranking of non-word typos is done; catching errors that are themselves valid words needs a small local model. Benchmark a few before choosing one.
 
 ## Done
 
@@ -31,3 +31,4 @@ Small, concrete next steps. The bigger picture lives in [docs/PLAN.md](docs/PLAN
 - [x] Visual cue for corrected words (flash, underline, hover with Revert)
 - [x] Aggressive mode: rare words with one clear plausible candidate are fixed too
 - [x] Reverts teach the custom dictionary (`autocorrect.learnFromReverts`), so corrections rejected once stay rejected
+- [x] Bigram context: the previous word re-ranks candidates (`as wel` → `as well`, `a timelin` → `timeline`)

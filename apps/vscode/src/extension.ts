@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import * as path from 'node:path';
 import * as vscode from 'vscode';
-import { AutocorrectEngine, parseLexicon } from '@autocorrect/core';
+import { AutocorrectEngine, parseBigrams, parseLexicon } from '@autocorrect/core';
 import { readConfig, SECTION, updateSetting } from './config.ts';
 import { AutocorrectController } from './editor.ts';
 
@@ -23,9 +23,11 @@ export function activate(context: vscode.ExtensionContext): AutocorrectApi {
   renderStatus();
 
   const ready = (async () => {
-    const tsv = await readFile(path.join(context.extensionPath, 'dist', 'en-US.tsv'), 'utf8');
+    const dataFile = (name: string) => readFile(path.join(context.extensionPath, 'dist', name), 'utf8');
+    // Corrections work without the bigram table; they are just blind to context.
+    const [tsv, bigramsTsv] = await Promise.all([dataFile('en-US.tsv'), dataFile('bigrams-en.tsv').catch(() => '')]);
     const config = readConfig();
-    const engine = new AutocorrectEngine(parseLexicon(tsv), { mode: config.mode, userWords: config.customDictionary });
+    const engine = new AutocorrectEngine(parseLexicon(tsv), { mode: config.mode, userWords: config.customDictionary, bigrams: parseBigrams(bigramsTsv) });
     const controller = new AutocorrectController(engine, config);
     context.subscriptions.push(controller);
     // A revert means the word was right as typed: learn it so it is never corrected again.

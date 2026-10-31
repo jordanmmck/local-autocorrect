@@ -1,7 +1,7 @@
 import { applyCaseShape, caseShape, isSentenceStart, isStandaloneWord, PROTECTED_WORDS } from './safety.ts';
-import { IMPLAUSIBLE_WEIGHT, rankCandidates } from './spelling.ts';
+import { IMPLAUSIBLE_WEIGHT, rankCandidates, type Context } from './spelling.ts';
 import { TYPO_TABLE } from './typos.ts';
-import type { Correction, CorrectionRequest, EngineOptions, Lexicon, Mode } from './types.ts';
+import type { Bigrams, Correction, CorrectionRequest, EngineOptions, Lexicon, Mode } from './types.ts';
 
 interface Thresholds {
   minLength: number;
@@ -32,15 +32,19 @@ const MAX_LENGTH = 30;
 const SOLO_MIN_WEIGHT = 0.5;
 /** The pronoun typed in lowercase, alone or with a contraction. */
 const I_PRONOUN = /^i('(m|ve|ll|d))?$/;
+/** A word separated from the typo only by spaces; punctuation in between means no usable context. */
+const PREV_WORD = /([A-Za-z']+)[ \t]+$/;
 
 export class AutocorrectEngine {
   #lexicon: Lexicon;
+  #bigrams: Bigrams | undefined;
   #thresholds: Thresholds;
   #userWords = new Set<string>();
   #suppressed = new Set<string>();
 
   constructor(lexicon: Lexicon, options: EngineOptions = {}) {
     this.#lexicon = lexicon;
+    this.#bigrams = options.bigrams;
     this.#thresholds = THRESHOLDS[options.mode ?? 'conservative'];
     this.setUserWords(options.userWords ?? []);
   }
@@ -78,7 +82,8 @@ export class AutocorrectEngine {
 
     if (this.#lexicon.isKnown(lower)) return null;
 
-    const correction = this.#rank(lower, 1) ?? (t.maxDistance === 2 && lower.length >= t.minLengthDistance2 ? this.#rank(lower, 2) : null);
+    const context = this.#context(before);
+    const correction = this.#rank(lower, 1, context) ?? (t.maxDistance === 2 && lower.length >= t.minLengthDistance2 ? this.#rank(lower, 2, context) : null);
     return correction && { original: word, replacement: applyCaseShape(correction.word, shape), confidence: correction.confidence, source: 'dictionary' };
   }
 
@@ -89,10 +94,17 @@ export class AutocorrectEngine {
     return { original: word, replacement: 'I' + word.slice(1), confidence: 0.99, source: 'typo-table' };
   }
 
+  /** The previous word on the line, for context-aware ranking. */
+  #context(before: string): Context | undefined {
+    if (!this.#bigrams) return undefined;
+    const prev = PREV_WORD.exec(before)?.[1].toLowerCase();
+    return prev ? { prev, bigrams: this.#bigrams } : undefined;
+  }
+
   /** The best candidate within `maxDistance` slips, if it clears the confidence thresholds. */
-  #rank(lower: string, maxDistance: 1 | 2): { word: string; confidence: number } | null {
+  #rank(lower: string, maxDistance: 1 | 2, context: Context | undefined): { word: string; confidence: number } | null {
     const t = this.#thresholds;
-    const candidates = rankCandidates(lower, this.#lexicon, maxDistance);
+    const candidates = rankCandidates(lower, this.#lexicon, maxDistance, context);
     const best = candidates[0];
     // Shrinking a typo to a one- or two-letter word ("rew" -> "re") is rarely what was meant.
     if (!best || best.word.length < 3) return null;

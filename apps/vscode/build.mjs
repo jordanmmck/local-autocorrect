@@ -11,9 +11,10 @@ const common = { bundle: true, platform: 'node', format: 'cjs', target: 'node20'
 await build({ ...common, entryPoints: ['src/extension.ts'], outfile: 'dist/extension.js' });
 
 const corePackage = require.resolve('@autocorrect/core/package.json');
-const lexicon = join(dirname(corePackage), 'data', 'en-US.tsv');
+const coreData = join(dirname(corePackage), 'data');
 mkdirSync('dist', { recursive: true });
-copyFileSync(lexicon, 'dist/en-US.tsv');
+copyFileSync(join(coreData, 'en-US.tsv'), 'dist/en-US.tsv');
+copyFileSync(join(coreData, 'bigrams-en.tsv'), 'dist/bigrams-en.tsv');
 // The SCOWL licence asks that its notice travel with copies of the word list.
 copyFileSync(createRequire(corePackage).resolve('wordlist-english/Copyright'), 'dist/SCOWL-COPYRIGHT.txt');
 
