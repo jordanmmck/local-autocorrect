@@ -3,12 +3,15 @@ import Carbon.HIToolbox
 /// A global hotkey registered through Carbon's RegisterEventHotKey, which
 /// works without any extra permissions.
 final class HotKey {
+    /// The revert binding, also recognized by the event tap so the hotkey's
+    /// own keystroke doesn't disturb the correction state it acts on.
+    static let revertKeyCode: Int64 = 6 // Z
     private var hotKeyRef: EventHotKeyRef?
     private var handlerRef: EventHandlerRef?
     private let action: () -> Void
 
-    /// Default binding: control-option-Z (Z is keycode 6).
-    init?(keyCode: UInt32 = 6, modifiers: UInt32 = UInt32(controlKey | optionKey), action: @escaping () -> Void) {
+    /// Default binding: control-option-Z.
+    init?(keyCode: UInt32 = UInt32(HotKey.revertKeyCode), modifiers: UInt32 = UInt32(controlKey | optionKey), action: @escaping () -> Void) {
         self.action = action
         var eventType = EventTypeSpec(
             eventClass: OSType(kEventClassKeyboard),

@@ -12,8 +12,8 @@ final class CorrectionController {
     private var word = ""
     /// Text typed before `word` since the last reset (context for the engine).
     private var line = ""
-    /// Bumped on every real keystroke; a stale seq cancels pending corrections
-    /// and invalidates the revert window.
+    /// Bumped on every real keystroke and mouse click; a stale seq cancels
+    /// pending corrections and invalidates the revert window.
     private var seq: UInt64 = 0
 
     var enabled = true
@@ -89,6 +89,9 @@ final class CorrectionController {
         if event.getIntegerValueField(.eventSourceUserData) == Injector.magic { return pass }
         switch type {
         case .leftMouseDown, .rightMouseDown, .otherMouseDown:
+            // A click moves the caret: cancel pending corrections and close
+            // the revert window, not just the word buffer.
+            seq &+= 1
             reset()
         case .keyDown:
             handleKeyDown(event)
@@ -99,8 +102,15 @@ final class CorrectionController {
     }
 
     private func handleKeyDown(_ event: CGEvent) {
-        seq &+= 1
         let flags = event.flags
+        // The revert hotkey reaches the tap before Carbon dispatches it to the
+        // HotKey handler; it must not bump seq or reset, or canRevert would
+        // always be false by the time revertLast() runs.
+        if event.getIntegerValueField(.keyboardEventKeycode) == HotKey.revertKeyCode,
+           flags.contains(.maskControl), flags.contains(.maskAlternate), !flags.contains(.maskCommand) {
+            return
+        }
+        seq &+= 1
         // A chord (cmd-A, ctrl-K, option-anything) can move the caret or edit
         // text in ways we cannot track: drop all context.
         if !flags.intersection([.maskCommand, .maskControl, .maskAlternate]).isEmpty {

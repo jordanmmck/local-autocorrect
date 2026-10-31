@@ -38,7 +38,9 @@ enum AppPolicy {
     static func isEnabled(bundleId: String?, config: Config) -> Bool {
         guard let bundleId else { return false }
         if let override = config.apps[bundleId] { return override }
-        return !defaultOff.contains { bundleId == $0 || bundleId.hasPrefix($0 + ".") || bundleId.hasPrefix($0) }
+        // Bare prefix match on purpose: real ids append variant suffixes with
+        // no separator ("dev.warp.Warp-Stable", "com.sublimetext.4").
+        return !defaultOff.contains { bundleId.hasPrefix($0) }
     }
 
     static var frontmostBundleId: String? {

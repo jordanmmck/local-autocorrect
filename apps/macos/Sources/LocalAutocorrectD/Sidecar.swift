@@ -54,15 +54,23 @@ final class Sidecar {
         process.standardOutput = stdoutPipe
         process.standardError = FileHandle.standardError
         process.terminationHandler = { [weak self] proc in
+            guard let self else { return }
+            self.failPending()
             DispatchQueue.main.async {
-                guard let self, self.ready || proc.terminationStatus != 0 else { return }
+                guard self.ready || proc.terminationStatus != 0 else { return }
                 self.ready = false
                 self.onFatal?("correction engine exited (status \(proc.terminationStatus))")
             }
         }
         stdoutPipe.fileHandleForReading.readabilityHandler = { [weak self] handle in
             let data = handle.availableData
-            guard let self, !data.isEmpty else { return }
+            guard let self else { return }
+            guard !data.isEmpty else {
+                // EOF: without this the handler is re-invoked in a tight loop.
+                handle.readabilityHandler = nil
+                self.failPending()
+                return
+            }
             self.queue.async { self.consume(data) }
         }
         do {
@@ -87,6 +95,15 @@ final class Sidecar {
             self.nextId += 1
             self.pending[id] = completion
             self.write(["id": id, "cmd": "check", "word": word, "before": before, "after": after])
+        }
+    }
+
+    /// Resolves every waiting check() with "no correction" when the sidecar dies.
+    private func failPending() {
+        queue.async {
+            let completions = self.pending.values
+            self.pending.removeAll()
+            DispatchQueue.main.async { completions.forEach { $0(nil) } }
         }
     }
 
