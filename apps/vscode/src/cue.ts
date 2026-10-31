@@ -28,6 +28,8 @@ export class CorrectionTracker implements vscode.Disposable {
   #byDocument = new Map<vscode.TextDocument, TrackedCorrection[]>();
   #nextId = 1;
   #flashing = new Map<TrackedCorrection, number>();
+  /** Documents whose editors currently show flash decorations that a render must clear. */
+  #flashedDocuments = new Set<vscode.TextDocument>();
   #flashTimer: ReturnType<typeof setInterval> | undefined;
   #underline = vscode.window.createTextEditorDecorationType({
     // The text-decoration value is injected into CSS, which is the only way to
@@ -48,7 +50,7 @@ export class CorrectionTracker implements vscode.Disposable {
     this.#style = style;
     this.#subscriptions = [
       vscode.workspace.onDidChangeTextDocument((e) => this.#onChange(e)),
-      vscode.workspace.onDidCloseTextDocument((doc) => this.#byDocument.delete(doc)),
+      vscode.workspace.onDidCloseTextDocument((doc) => this.#forget(doc)),
       // Decorations are lost when an editor is hidden, so redraw when it reappears.
       vscode.window.onDidChangeVisibleTextEditors(() => this.#renderAll()),
     ];
@@ -56,6 +58,10 @@ export class CorrectionTracker implements vscode.Disposable {
 
   setStyle(style: CueStyle): void {
     this.#style = style;
+    if (style === 'none' || style === 'underline') {
+      this.#flashing.clear();
+      this.#stopTimerIfIdle();
+    }
     this.#renderAll();
   }
 
@@ -81,6 +87,19 @@ export class CorrectionTracker implements vscode.Disposable {
   dispose(): void {
     clearInterval(this.#flashTimer);
     for (const d of [...this.#subscriptions, this.#underline, ...this.#flashTypes]) d.dispose();
+  }
+
+  #forget(document: vscode.TextDocument): void {
+    this.#byDocument.delete(document);
+    this.#flashedDocuments.delete(document);
+    for (const entry of this.#flashing.keys()) if (entry.document === document) this.#flashing.delete(entry);
+    this.#stopTimerIfIdle();
+  }
+
+  #stopTimerIfIdle(): void {
+    if (this.#flashing.size || this.#flashTimer === undefined) return;
+    clearInterval(this.#flashTimer);
+    this.#flashTimer = undefined;
   }
 
   #onChange(e: vscode.TextDocumentChangeEvent): void {
@@ -117,10 +136,7 @@ export class CorrectionTracker implements vscode.Disposable {
       if (step + 1 >= FLASH_ALPHAS.length || !entry.live) this.#flashing.delete(entry);
       else this.#flashing.set(entry, step + 1);
     }
-    if (!this.#flashing.size) {
-      clearInterval(this.#flashTimer);
-      this.#flashTimer = undefined;
-    }
+    this.#stopTimerIfIdle();
     for (const doc of documents) this.#render(doc);
   }
 
@@ -131,13 +147,22 @@ export class CorrectionTracker implements vscode.Disposable {
   #render(document: vscode.TextDocument): void {
     const live = this.#byDocument.get(document) ?? [];
     const underlined = this.#style === 'underline' || this.#style === 'flashAndUnderline' ? live : [];
+    const flashRanges = new Map<number, vscode.Range[]>();
+    for (const [entry, step] of this.#flashing) {
+      if (entry.document !== document || !entry.live) continue;
+      const ranges = flashRanges.get(step);
+      if (ranges) ranges.push(entry.range);
+      else flashRanges.set(step, [entry.range]);
+    }
+    // When a document's flashes end, one last pass clears the tints; after that
+    // the per-step loop is skipped so ordinary typing only redraws underlines.
+    const drawFlashes = flashRanges.size > 0 || this.#flashedDocuments.has(document);
+    if (flashRanges.size) this.#flashedDocuments.add(document);
+    else this.#flashedDocuments.delete(document);
     for (const editor of vscode.window.visibleTextEditors) {
       if (editor.document !== document) continue;
       editor.setDecorations(this.#underline, underlined.map((entry) => ({ range: entry.range, hoverMessage: hover(entry) })));
-      this.#flashTypes.forEach((type, step) => {
-        const ranges = [...this.#flashing].filter(([e, s]) => s === step && e.document === document && e.live).map(([e]) => e.range);
-        editor.setDecorations(type, ranges);
-      });
+      if (drawFlashes) this.#flashTypes.forEach((type, step) => editor.setDecorations(type, flashRanges.get(step) ?? []));
     }
   }
 }

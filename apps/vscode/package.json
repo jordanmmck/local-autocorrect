@@ -113,6 +113,11 @@
           ],
           "default": "flashAndUnderline",
           "markdownDescription": "How corrected words are marked. Hover over an underlined word to see what you typed and revert it. Underlines are kept in memory only and disappear when the document is closed."
+        },
+        "autocorrect.highlightCorrections": {
+          "type": "boolean",
+          "default": false,
+          "markdownDeprecationMessage": "Replaced by `#autocorrect.correctionCue#`; this setting is ignored."
         }
       }
     }

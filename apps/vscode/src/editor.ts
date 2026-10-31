@@ -56,11 +56,12 @@ export class AutocorrectController implements vscode.Disposable {
 
   async #revert(entry: TrackedCorrection | undefined): Promise<boolean> {
     if (!entry?.live || entry.document.isClosed || entry.document.getText(entry.range) !== entry.replacement) return false;
-    this.#engine.suppress(entry.original);
-    if (entry === this.#last) this.#last = undefined;
     const edit = new vscode.WorkspaceEdit();
     edit.replace(entry.document.uri, entry.range, entry.original);
-    return vscode.workspace.applyEdit(edit);
+    if (!(await vscode.workspace.applyEdit(edit))) return false;
+    this.#engine.suppress(entry.original);
+    if (entry === this.#last) this.#last = undefined;
+    return true;
   }
 
   #onChange(e: vscode.TextDocumentChangeEvent): void {

@@ -41,7 +41,9 @@ export function activate(context: vscode.ExtensionContext): AutocorrectApi {
     vscode.commands.registerCommand('autocorrect.toggle', () => updateSetting('enabled', !readConfig().enabled)),
 
     vscode.commands.registerCommand('autocorrect.revertCorrection', async (id: number) => {
-      await (await ready).revertById(id);
+      if (!(await (await ready).revertById(id))) {
+        vscode.window.setStatusBarMessage('Autocorrect: the text has changed, nothing to revert', 2000);
+      }
     }),
 
     vscode.commands.registerCommand('autocorrect.revertLastCorrection', async () => {

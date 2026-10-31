@@ -52,6 +52,7 @@ Plain <kbd>Cmd/Ctrl+Z</kbd> right after a correction undoes just the correction 
 
 Corrected words briefly flash and then keep a faint dotted underline. Hover over one to see what you typed, and click **Revert** to restore it, even several sentences later. The underlines are kept in memory only and disappear when you close the document.
 
+![A corrected word flashing just after the fix, dark theme](docs/images/cue-flash-dark.png)
 ![Hovering a corrected word shows the original and a Revert link](docs/images/cue-hover-dark.png)
 ![Faint dotted underlines on corrected words, light theme](docs/images/cue-underline-light.png)
 
