@@ -115,7 +115,7 @@ Current numbers on an M-series Mac:
 | | conservative (default) | balanced | aggressive |
 |---|---|---|---|
 | Hand-written typos (54): recall / precision | 87.0% / 100% | 96.3% / 100% | 98.1% / 100% |
-| Synthetic single-slip typos (2,000): recall / precision | 87.0% / 96.7% | 89.6% / 94.3% | 89.6% / 94.3% |
+| Synthetic single-slip typos (2,000): recall / precision | 87.6% / 96.6% | 90.0% / 94.3% | 90.0% / 94.2% |
 | Context-dependent typos (15): recall with / without bigrams | 86.7% / 40.0% | 86.7% / 60.0% | 100% / 86.7% |
 | False corrections per 1,000 words of clean text | 0 (411 words) | 0 (411 words) | 0 (411 words) |
 | Median / p95 engine time per word | 0.07 / 0.14 ms | 0.08 / 105 ms | 0.08 / 0.22 ms |

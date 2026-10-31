@@ -115,7 +115,7 @@ export interface Context {
  * an unseen pair leaves the unigram prior untouched, so sparse bigram data
  * never penalises a good candidate. Calibrated in benchmarks/.
  */
-export const CONTEXT_PRIOR = 20_000_000;
+const CONTEXT_PRIOR = 20_000_000;
 
 /** Proposable dictionary words near `typed` (lowercase), best first. */
 export function rankCandidates(typed: string, lexicon: Lexicon, maxDistance: 1 | 2, context?: Context): Candidate[] {
@@ -127,7 +127,9 @@ export function rankCandidates(typed: string, lexicon: Lexicon, maxDistance: 1 |
   for (const [word, weight] of edits) {
     let prior = lexicon.prior(word);
     if (prior <= 0) continue;
-    if (context) prior += CONTEXT_PRIOR * context.bigrams.prob(context.prev, word);
+    // Context only vouches for plausible slips: a far-fetched candidate must
+    // not win on fitting the previous word alone ("sqlite" is not "site").
+    if (context && weight > IMPLAUSIBLE_WEIGHT) prior += CONTEXT_PRIOR * context.bigrams.prob(context.prev, word);
     candidates.push({ word, weight, score: weight * prior });
   }
   return candidates.sort((a, b) => b.score - a.score);

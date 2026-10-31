@@ -26,8 +26,13 @@ export function activate(context: vscode.ExtensionContext): AutocorrectApi {
     const dataFile = (name: string) => readFile(path.join(context.extensionPath, 'dist', name), 'utf8');
     // Corrections work without the bigram table; they are just blind to context.
     const [tsv, bigramsTsv] = await Promise.all([dataFile('en-US.tsv'), dataFile('bigrams-en.tsv').catch(() => '')]);
+    if (!bigramsTsv) console.warn('local-autocorrect: dist/bigrams-en.tsv is missing or unreadable; corrections will ignore context.');
     const config = readConfig();
-    const engine = new AutocorrectEngine(parseLexicon(tsv), { mode: config.mode, userWords: config.customDictionary, bigrams: parseBigrams(bigramsTsv) });
+    const engine = new AutocorrectEngine(parseLexicon(tsv), {
+      mode: config.mode,
+      userWords: config.customDictionary,
+      bigrams: bigramsTsv ? parseBigrams(bigramsTsv) : undefined,
+    });
     const controller = new AutocorrectController(engine, config);
     context.subscriptions.push(controller);
     // A revert means the word was right as typed: learn it so it is never corrected again.

@@ -96,6 +96,19 @@ describe('bigram context', () => {
     assert.equal(engine({ bigrams }).check({ before: 'as. ', word: 'wel', after: ' ' }), null);
   });
 
+  test('extra spaces and apostrophe words still extract the previous word safely', () => {
+    assert.equal(e.check({ before: 'as  ', word: 'wel', after: ' ' })?.replacement, 'well');
+    // "don't" is taken whole (never a bare "t"), finds no bigrams, and changes nothing.
+    assert.equal(e.check({ before: "don't ", word: 'wel', after: ' ' }), null);
+  });
+
+  test('context does not vouch for far-fetched candidates', () => {
+    // "sqlite" is two unlikely edits from "site"; a strong "the site" bigram must not make it win.
+    const balanced = engine({ mode: 'balanced', bigrams });
+    assert.equal(correctLast(balanced, 'the sqlite'), undefined);
+    assert.equal(correctLast(balanced, 'a graphql'), undefined);
+  });
+
   test('context never creates corrections of valid words', () => {
     for (const w of ['Ethereum', 'useState', 'the', 'than']) {
       assert.equal(correctLast(engine({ mode: 'aggressive', bigrams }), `more ${w}`), undefined, w);
