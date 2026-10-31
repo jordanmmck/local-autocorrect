@@ -11,6 +11,7 @@ export interface Config {
   languages: string[];
   customDictionary: string[];
   correctionCue: CueStyle;
+  learnFromReverts: boolean;
 }
 
 export function readConfig(): Config {
@@ -21,6 +22,7 @@ export function readConfig(): Config {
     languages: c.get('languages', ['markdown', 'plaintext']),
     customDictionary: c.get('customDictionary', []),
     correctionCue: c.get<CueStyle>('correctionCue', 'flashAndUnderline'),
+    learnFromReverts: c.get('learnFromReverts', true),
   };
 }
 

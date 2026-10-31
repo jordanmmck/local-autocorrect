@@ -38,13 +38,13 @@ const NEIGHBOURS: Record<string, string> = {
   z: 'asx', x: 'zsdc', c: 'xdfv', v: 'cfgb', b: 'vghn', n: 'bhjm', m: 'njk',
 };
 
-function syntheticTypos(count: number) {
+function syntheticTypos(count: number, minPrior = 500, maxPrior = Infinity) {
   const random = rng(42);
   const pick = <T>(xs: T[]) => xs[Math.floor(random() * xs.length)];
   const words = lexiconTsv
     .split('\n')
     .map((l) => l.split('\t'))
-    .filter(([w, p]) => w && w.length >= 4 && Number(p) >= 500)
+    .filter(([w, p]) => w && w.length >= 4 && Number(p) >= minPrior && Number(p) < maxPrior)
     .map(([w]) => w);
   const out: { typo: string; expected: string; category: string }[] = [];
   while (out.length < count) {
@@ -100,12 +100,15 @@ function scoreClean(engine: AutocorrectEngine) {
 
 const pct = (x: number) => `${(x * 100).toFixed(1)}%`;
 const synthetic = syntheticTypos(2000);
+/** Typos of uncommon words (low lexicon prior): where the modes differ most. */
+const syntheticRare = syntheticTypos(1000, 10, 500);
 
-for (const mode of ['conservative', 'balanced'] as Mode[]) {
+for (const mode of ['conservative', 'balanced', 'aggressive'] as Mode[]) {
   timings.length = 0;
   const engine = new AutocorrectEngine(lexicon, { mode });
   const hand = scoreTypos(engine, handTypos);
   const synth = scoreTypos(engine, synthetic);
+  const rare = scoreTypos(engine, syntheticRare);
   const clean = scoreClean(engine);
   timings.sort((a, b) => a - b);
   const q = (p: number) => timings[Math.floor(p * (timings.length - 1))].toFixed(3);
@@ -113,6 +116,7 @@ for (const mode of ['conservative', 'balanced'] as Mode[]) {
   console.log(`\n## ${mode}`);
   console.log(`hand-written typos  recall ${pct(hand.recall)} (${hand.fixed}/${hand.total})  precision ${pct(hand.precision)}  wrong ${hand.wrong}`);
   console.log(`synthetic typos     recall ${pct(synth.recall)} (${synth.fixed}/${synth.total})  precision ${pct(synth.precision)}  wrong ${synth.wrong}`);
+  console.log(`rare-word typos     recall ${pct(rare.recall)} (${rare.fixed}/${rare.total})  precision ${pct(rare.precision)}  wrong ${rare.wrong}`);
   console.log(`clean text          ${clean.falseCorrections.length} false corrections in ${clean.words} words (${clean.per1000.toFixed(2)} per 1,000)`);
   for (const f of clean.falseCorrections) console.log(`  false: ${f}`);
   console.log(`latency per word    median ${q(0.5)} ms  p95 ${q(0.95)} ms`);

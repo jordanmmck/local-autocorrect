@@ -42,11 +42,12 @@ export function isSentenceStart(before: string): boolean {
  */
 export const PROTECTED_WORDS = new Set([
   'afaik', 'btw', 'fwiw', 'idk', 'imho', 'imo', 'irl', 'lmao', 'omg', 'smh', 'wtf',
-  'api', 'apis', 'async', 'auth', 'backend', 'bool', 'cli', 'config', 'configs', 'const', 'css', 'dev', 'devs',
-  'diff', 'dns', 'env', 'eslint', 'faq', 'frontend', 'func', 'github', 'gitlab', 'html', 'http', 'https', 'ide',
-  'impl', 'init', 'io', 'js', 'json', 'jsx', 'lol', 'markdown', 'npm', 'ok', 'onboarding', 'param', 'params', 'pnpm', 'readme',
+  'api', 'apis', 'async', 'auth', 'backend', 'bool', 'cli', 'config', 'configs', 'const', 'css', 'deliverables',
+  'dev', 'devs', 'diff', 'dns', 'env', 'eslint', 'faq', 'frontend', 'func', 'github', 'gitlab', 'gmail', 'hiit',
+  'html', 'http', 'https', 'ide', 'impl', 'init', 'io', 'js', 'json', 'jsx', 'lol', 'markdown', 'matcha', 'nextjs',
+  'npm', 'oauth', 'ok', 'onboarding', 'param', 'params', 'pnpm', 'postgres', 'pytorch', 'readme', 'reddit',
   'regex', 'repo', 'repos', 'sql', 'src', 'ssh', 'struct', 'sudo', 'tbh', 'todo', 'todos', 'tsx', 'ui', 'url',
-  'urls', 'utils', 'vscode', 'webhook', 'webhooks', 'www', 'yaml', 'yml',
+  'urls', 'utils', 'vscode', 'webhook', 'webhooks', 'wordle', 'www', 'yaml', 'yml',
 ]);
 
 /**

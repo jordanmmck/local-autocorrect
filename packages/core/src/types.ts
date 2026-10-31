@@ -16,7 +16,7 @@ export interface Correction {
   source: 'typo-table' | 'dictionary';
 }
 
-export type Mode = 'conservative' | 'balanced';
+export type Mode = 'conservative' | 'balanced' | 'aggressive';
 
 export interface EngineOptions {
   mode?: Mode;
