@@ -19,6 +19,7 @@ Small, concrete next steps. The bigger picture lives in [docs/PLAN.md](docs/PLAN
 ## Later
 
 - [ ] **A bigger, more realistic evaluation set** (Milestone 4): real typing errors, more clean prose, informal writing.
+- [ ] **Pack the bigram table.** `parseBigrams` keeps 237k string-keyed Map entries (~tens of MB in the extension host) for 4MB of TSV. A per-prev index into typed arrays would cut that several-fold.
 - [ ] **Speed up distance-2 candidate generation for long words.** `edits2` is O((26·length)²); on 15+ character words a single check can take ~100ms (see the rare-word benchmark's balanced p95). Prune the first edit by weight, or generate candidates from the lexicon instead.
 - [ ] **Publish** once it has held up in real use: add an icon, `"preview": true` and a CHANGELOG, then publish to the VS Code Marketplace and Open VSX (for Cursor and VSCodium) from a GitHub Action when a release is tagged. Needs a Marketplace publisher (`jordanmmck`), an Open VSX account, and their tokens added as repo secrets.
 - [ ] **Real-word errors** (Milestone 3): `I don't thing so` → `think`. Bigram ranking of non-word typos is done; catching errors that are themselves valid words needs a small local model. Benchmark a few before choosing one.
