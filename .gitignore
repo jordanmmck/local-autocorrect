@@ -4,3 +4,5 @@ out/
 *.vsix
 .vscode-test/
 packages/core/data/
+apps/macos/.build/
+apps/macos/build/

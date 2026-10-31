@@ -8,7 +8,7 @@
   ],
   "scripts": {
     "build": "npm run build --workspaces",
-    "typecheck": "tsc -p packages/core && tsc -p apps/vscode",
+    "typecheck": "tsc -p packages/core && tsc -p apps/vscode && tsc -p apps/macos",
     "test": "npm test --workspaces",
     "bench": "npm run build -w @autocorrect/core && node benchmarks/run.mts"
   },
