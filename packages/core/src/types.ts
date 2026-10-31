@@ -22,6 +22,13 @@ export interface EngineOptions {
   mode?: Mode;
   /** Words that are always accepted as written and never proposed. */
   userWords?: Iterable<string>;
+  /** Word-pair statistics; when given, candidates that fit the preceding word rank higher. */
+  bigrams?: Bigrams;
+}
+
+export interface Bigrams {
+  /** P(word | prev) for a lowercase word pair; 0 when the pair is unseen. */
+  prob(prev: string, word: string): number;
 }
 
 export interface Lexicon {

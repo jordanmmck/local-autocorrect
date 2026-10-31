@@ -9,11 +9,12 @@
 // Synthetic typos are generated with the same slip types the engine models,
 // so they flatter recall; treat them as a regression check, not a quality claim.
 import { readFileSync } from 'node:fs';
-import { AutocorrectEngine, parseLexicon, type Mode } from '../packages/core/src/index.ts';
+import { AutocorrectEngine, parseBigrams, parseLexicon, type Mode } from '../packages/core/src/index.ts';
 
 const read = (rel: string) => readFileSync(new URL(rel, import.meta.url), 'utf8');
 const lexiconTsv = read('../packages/core/data/en-US.tsv');
 const lexicon = parseLexicon(lexiconTsv);
+const bigrams = parseBigrams(read('../packages/core/data/bigrams-en.tsv'));
 const rows = (text: string) => text.split('\n').filter((l) => l.trim() && !l.startsWith('#'));
 
 const handTypos = rows(read('data/typos.tsv')).map((l) => {
@@ -21,6 +22,11 @@ const handTypos = rows(read('data/typos.tsv')).map((l) => {
   return { typo, expected, category };
 });
 const cleanLines = rows(read('data/clean.txt'));
+/** Typos whose fix needs the preceding word; scored only for engines with bigram context. */
+const contextTypos = rows(read('data/context.tsv')).map((l) => {
+  const [before, typo, expected] = l.split('\t');
+  return { before, typo, expected };
+});
 
 /** Deterministic PRNG (mulberry32) so the synthetic set is reproducible. */
 function rng(seed: number) {
@@ -71,11 +77,11 @@ function timedCheck(engine: AutocorrectEngine, before: string, word: string, aft
   return result;
 }
 
-function scoreTypos(engine: AutocorrectEngine, typos: { typo: string; expected: string }[]) {
+function scoreTypos(engine: AutocorrectEngine, typos: { before?: string; typo: string; expected: string }[]) {
   let fixed = 0;
   let wrong = 0;
-  for (const { typo, expected } of typos) {
-    const r = timedCheck(engine, 'a ', typo, ' ');
+  for (const { before, typo, expected } of typos) {
+    const r = timedCheck(engine, before ?? 'a ', typo, ' ');
     if (!r) continue;
     if (r.replacement === expected) fixed++;
     else wrong++;
@@ -105,10 +111,13 @@ const syntheticRare = syntheticTypos(1000, 10, 500);
 
 for (const mode of ['conservative', 'balanced', 'aggressive'] as Mode[]) {
   timings.length = 0;
-  const engine = new AutocorrectEngine(lexicon, { mode });
+  const engine = new AutocorrectEngine(lexicon, { mode, bigrams });
+  const noContext = new AutocorrectEngine(lexicon, { mode });
   const hand = scoreTypos(engine, handTypos);
   const synth = scoreTypos(engine, synthetic);
   const rare = scoreTypos(engine, syntheticRare);
+  const ctx = scoreTypos(engine, contextTypos);
+  const ctxPlain = scoreTypos(noContext, contextTypos);
   const clean = scoreClean(engine);
   timings.sort((a, b) => a - b);
   const q = (p: number) => timings[Math.floor(p * (timings.length - 1))].toFixed(3);
@@ -117,6 +126,7 @@ for (const mode of ['conservative', 'balanced', 'aggressive'] as Mode[]) {
   console.log(`hand-written typos  recall ${pct(hand.recall)} (${hand.fixed}/${hand.total})  precision ${pct(hand.precision)}  wrong ${hand.wrong}`);
   console.log(`synthetic typos     recall ${pct(synth.recall)} (${synth.fixed}/${synth.total})  precision ${pct(synth.precision)}  wrong ${synth.wrong}`);
   console.log(`rare-word typos     recall ${pct(rare.recall)} (${rare.fixed}/${rare.total})  precision ${pct(rare.precision)}  wrong ${rare.wrong}`);
+  console.log(`context typos       recall ${pct(ctx.recall)} (${ctx.fixed}/${ctx.total})  wrong ${ctx.wrong}  [without context: ${pct(ctxPlain.recall)}, wrong ${ctxPlain.wrong}]`);
   console.log(`clean text          ${clean.falseCorrections.length} false corrections in ${clean.words} words (${clean.per1000.toFixed(2)} per 1,000)`);
   for (const f of clean.falseCorrections) console.log(`  false: ${f}`);
   console.log(`latency per word    median ${q(0.5)} ms  p95 ${q(0.95)} ms`);

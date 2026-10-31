@@ -195,6 +195,14 @@ suite('Autocorrect in a real editor', () => {
     await textStays(editor, 'folks ');
   });
 
+  test('the previous word gives context for the correction', async () => {
+    const editor = await open();
+    // "wel" alone loses to the too-short candidate "we"; after "as" the
+    // bigram table makes "well" the clear winner.
+    await type('as wel ');
+    await textBecomes(editor, 'as well ');
+  });
+
   test('aggressive mode fixes rare words', async () => {
     await setConfig('mode', 'aggressive');
     const editor = await open();
