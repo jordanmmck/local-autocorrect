@@ -3,12 +3,14 @@ import type { Mode } from '@autocorrect/core';
 
 export const SECTION = 'autocorrect';
 
+export type CueStyle = 'none' | 'flash' | 'underline' | 'flashAndUnderline';
+
 export interface Config {
   enabled: boolean;
   mode: Mode;
   languages: string[];
   customDictionary: string[];
-  highlightCorrections: boolean;
+  correctionCue: CueStyle;
 }
 
 export function readConfig(): Config {
@@ -18,7 +20,7 @@ export function readConfig(): Config {
     mode: c.get<Mode>('mode', 'conservative'),
     languages: c.get('languages', ['markdown', 'plaintext']),
     customDictionary: c.get('customDictionary', []),
-    highlightCorrections: c.get('highlightCorrections', false),
+    correctionCue: c.get<CueStyle>('correctionCue', 'flashAndUnderline'),
   };
 }
 

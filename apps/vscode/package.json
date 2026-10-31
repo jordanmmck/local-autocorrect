@@ -43,8 +43,21 @@
         "command": "autocorrect.addToDictionary",
         "title": "Add Word to Dictionary",
         "category": "Autocorrect"
+      },
+      {
+        "command": "autocorrect.revertCorrection",
+        "title": "Revert Correction",
+        "category": "Autocorrect"
       }
     ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "autocorrect.revertCorrection",
+          "when": "false"
+        }
+      ]
+    },
     "configuration": {
       "title": "Autocorrect",
       "properties": {
@@ -84,10 +97,27 @@
           "default": [],
           "description": "Words that should never be corrected."
         },
+        "autocorrect.correctionCue": {
+          "type": "string",
+          "enum": [
+            "flashAndUnderline",
+            "underline",
+            "flash",
+            "none"
+          ],
+          "enumDescriptions": [
+            "A soft tint flashes on the corrected word and fades, then a faint dotted underline stays.",
+            "Only the faint dotted underline.",
+            "Only the fading flash.",
+            "No visual cue."
+          ],
+          "default": "flashAndUnderline",
+          "markdownDescription": "How corrected words are marked. Hover over an underlined word to see what you typed and revert it. Underlines are kept in memory only and disappear when the document is closed."
+        },
         "autocorrect.highlightCorrections": {
           "type": "boolean",
           "default": false,
-          "description": "Briefly underline each correction. Hover over it to see what you typed."
+          "markdownDeprecationMessage": "Replaced by `#autocorrect.correctionCue#`; this setting is ignored."
         }
       }
     }

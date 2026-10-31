@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
 import * as vscode from 'vscode';
+import type { AutocorrectController } from '../../editor.ts';
+import type { AutocorrectApi } from '../../extension.ts';
 
 const EXTENSION_ID = 'jordanmmck.local-autocorrect';
 /** How long to wait before concluding that no correction is coming. */
@@ -36,11 +38,14 @@ async function setConfig(key: string, value: unknown): Promise<void> {
   await vscode.workspace.getConfiguration('autocorrect').update(key, value, vscode.ConfigurationTarget.Global);
 }
 
+let activeController: AutocorrectController | undefined;
+const controller = () => activeController!;
+
 suite('Autocorrect in a real editor', () => {
   suiteSetup(async () => {
-    const ext = vscode.extensions.getExtension(EXTENSION_ID);
+    const ext = vscode.extensions.getExtension<AutocorrectApi>(EXTENSION_ID);
     assert.ok(ext, 'extension not found');
-    await (await ext.activate()).ready;
+    activeController = await (await ext.activate()).ready;
     // Let the workbench finish restoring its layout; until then it can move
     // keyboard focus away from the editor mid-test.
     await sleep(2000);
@@ -50,7 +55,7 @@ suite('Autocorrect in a real editor', () => {
     await vscode.commands.executeCommand('workbench.action.closeAllEditors');
     await setConfig('enabled', undefined);
     await setConfig('customDictionary', undefined);
-    await setConfig('highlightCorrections', undefined);
+    await setConfig('correctionCue', undefined);
   });
 
   for (const [input, expected] of [
@@ -147,11 +152,46 @@ suite('Autocorrect in a real editor', () => {
     assert.equal(vscode.workspace.getConfiguration('autocorrect').get('enabled'), true);
   });
 
-  test('highlighting does not change the text', async () => {
-    await setConfig('highlightCorrections', true);
+  for (const cue of ['none', 'flash', 'underline', 'flashAndUnderline']) {
+    test(`correction cue "${cue}" does not change the text`, async () => {
+      await setConfig('correctionCue', cue);
+      const editor = await open();
+      await type('teh ');
+      await textBecomes(editor, 'the ');
+    });
+  }
+
+  test('an earlier correction can be reverted after more typing', async () => {
     const editor = await open();
-    await type('teh ');
-    await textBecomes(editor, 'the ');
+    await type('waht ');
+    await textBecomes(editor, 'what ');
+    const first = controller().lastCorrection!.id;
+    await type('wrod ');
+    await textBecomes(editor, 'what word ');
+    await vscode.commands.executeCommand('autocorrect.revertCorrection', first);
+    await textBecomes(editor, 'waht word ');
+  });
+
+  test('revert still finds the word after text is inserted before it', async () => {
+    const editor = await open();
+    await type('anohter ');
+    await textBecomes(editor, 'another ');
+    const id = controller().lastCorrection!.id;
+    editor.selection = new vscode.Selection(0, 0, 0, 0);
+    await type('so,\nyes ');
+    await textBecomes(editor, 'so,\nyes another ');
+    await vscode.commands.executeCommand('autocorrect.revertCorrection', id);
+    await textBecomes(editor, 'so,\nyes anohter ');
+  });
+
+  test('editing a corrected word stops it being revertible', async () => {
+    const editor = await open();
+    await type('peopel ');
+    await textBecomes(editor, 'people ');
+    const id = controller().lastCorrection!.id;
+    await editor.edit((b) => b.replace(new vscode.Range(0, 0, 0, 6), 'folks'));
+    await vscode.commands.executeCommand('autocorrect.revertCorrection', id);
+    await textStays(editor, 'folks ');
   });
 
   test('works in plaintext', async () => {
