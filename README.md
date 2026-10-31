@@ -18,7 +18,7 @@ you get:    I think that this would be a great way to improve things.
 - **Your vocabulary, swearing included.** `fuckign` becomes `fucking`, never `ducking`. Profanity is ordinary vocabulary here: it is never corrected away, and typos of swear words are fixed like any other typo.
 - **Local.** No network calls and no telemetry. Typing history is never stored.
 - **Quiet.** No ghost text, suggestion lists or popups. A corrected word gets a soft flash and a faint dotted underline, so you can tell what changed without being interrupted.
-- **Reversible.** One undo reverts a correction, and that correction is never made again in the session.
+- **Reversible.** One undo reverts a correction — and teaches it: the word you typed goes into your dictionary and is never corrected again.
 
 ## Try it
 
@@ -48,7 +48,7 @@ code --install-extension apps/vscode/local-autocorrect-0.1.0.vsix
 | `Autocorrect: Revert Last Correction` | Restore the original word and stop correcting it this session. |
 | `Autocorrect: Add Word to Dictionary` | Never correct a word. Pre-fills the word under the cursor or the last corrected word. |
 
-Plain <kbd>Cmd/Ctrl+Z</kbd> right after a correction undoes just the correction and leaves the space or punctuation you typed. The word is then suppressed for the rest of the session.
+Plain <kbd>Cmd/Ctrl+Z</kbd> right after a correction undoes just the correction and leaves the space or punctuation you typed. The word is then added to `autocorrect.customDictionary` and never corrected again (turn off `autocorrect.learnFromReverts` to keep it per-session instead).
 
 Corrected words briefly flash and then keep a faint dotted underline. Hover over one to see what you typed, and click **Revert** to restore it, even several sentences later. The underlines are kept in memory only and disappear when you close the document.
 
@@ -59,9 +59,10 @@ Corrected words briefly flash and then keep a faint dotted underline. Hover over
 | Setting | Default | |
 |---|---|---|
 | `autocorrect.enabled` | `true` | |
-| `autocorrect.mode` | `"conservative"` | `"balanced"` also fixes two-slip typos and closer calls. |
+| `autocorrect.mode` | `"conservative"` | `"balanced"` also fixes two-slip typos and closer calls. `"aggressive"` also fixes rare words when one plausible candidate is the clear winner. |
 | `autocorrect.languages` | `["markdown", "plaintext"]` | Language IDs to correct in. |
 | `autocorrect.customDictionary` | `[]` | Words that are never corrected. |
+| `autocorrect.learnFromReverts` | `true` | Reverting a correction adds the typed word to the custom dictionary. |
 | `autocorrect.correctionCue` | `"flashAndUnderline"` | How corrected words are marked: `"flashAndUnderline"`, `"underline"`, `"flash"` or `"none"`. |
 
 ## How it works

@@ -54,6 +54,7 @@ suite('Autocorrect in a real editor', () => {
   teardown(async () => {
     await vscode.commands.executeCommand('workbench.action.closeAllEditors');
     await setConfig('enabled', undefined);
+    await setConfig('mode', undefined);
     await setConfig('customDictionary', undefined);
     await setConfig('correctionCue', undefined);
   });
@@ -192,6 +193,27 @@ suite('Autocorrect in a real editor', () => {
     await editor.edit((b) => b.replace(new vscode.Range(0, 0, 0, 6), 'folks'));
     await vscode.commands.executeCommand('autocorrect.revertCorrection', id);
     await textStays(editor, 'folks ');
+  });
+
+  test('aggressive mode fixes rare words', async () => {
+    await setConfig('mode', 'aggressive');
+    const editor = await open();
+    await type('entropyy ');
+    await textBecomes(editor, 'entropy ');
+  });
+
+  test('reverting teaches the word to the custom dictionary', async () => {
+    const editor = await open();
+    await type('alwasy ');
+    await textBecomes(editor, 'always ');
+    await vscode.commands.executeCommand('autocorrect.revertLastCorrection');
+    await textBecomes(editor, 'alwasy ');
+    const dict = () => vscode.workspace.getConfiguration('autocorrect').get<string[]>('customDictionary') ?? [];
+    const deadline = Date.now() + 2000;
+    while (!dict().includes('alwasy') && Date.now() < deadline) await sleep(20);
+    assert.ok(dict().includes('alwasy'), 'reverted word was not learned');
+    await type('alwasy ');
+    await textStays(editor, 'alwasy alwasy ');
   });
 
   test('works in plaintext', async () => {

@@ -28,6 +28,14 @@ export function activate(context: vscode.ExtensionContext): AutocorrectApi {
     const engine = new AutocorrectEngine(parseLexicon(tsv), { mode: config.mode, userWords: config.customDictionary });
     const controller = new AutocorrectController(engine, config);
     context.subscriptions.push(controller);
+    // A revert means the word was right as typed: learn it so it is never corrected again.
+    context.subscriptions.push(
+      controller.onDidRevert.event(async (word) => {
+        const { learnFromReverts, customDictionary } = readConfig();
+        if (!learnFromReverts || customDictionary.some((w) => w.toLowerCase() === word.toLowerCase())) return;
+        await updateSetting('customDictionary', [...customDictionary, word]);
+      }),
+    );
     return controller;
   })();
 

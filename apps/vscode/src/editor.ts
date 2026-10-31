@@ -19,6 +19,8 @@ export class AutocorrectController implements vscode.Disposable {
   #last: TrackedCorrection | undefined;
   #subscription: vscode.Disposable;
   readonly onDidCorrect = new vscode.EventEmitter<Correction>();
+  /** Fires with the typed word whenever the user rejects a correction (revert command, hover Revert or undo). */
+  readonly onDidRevert = new vscode.EventEmitter<string>();
 
   constructor(engine: AutocorrectEngine, config: Config) {
     this.#engine = engine;
@@ -52,6 +54,7 @@ export class AutocorrectController implements vscode.Disposable {
     this.#subscription.dispose();
     this.#tracker.dispose();
     this.onDidCorrect.dispose();
+    this.onDidRevert.dispose();
   }
 
   async #revert(entry: TrackedCorrection | undefined): Promise<boolean> {
@@ -61,6 +64,7 @@ export class AutocorrectController implements vscode.Disposable {
     if (!(await vscode.workspace.applyEdit(edit))) return false;
     this.#engine.suppress(entry.original);
     if (entry === this.#last) this.#last = undefined;
+    this.onDidRevert.fire(entry.original);
     return true;
   }
 
@@ -150,6 +154,7 @@ export class AutocorrectController implements vscode.Disposable {
     if (e.contentChanges.some((c) => c.text === last.original && c.range.start.isEqual(last.range.start))) {
       this.#engine.suppress(last.original);
       this.#last = undefined;
+      this.onDidRevert.fire(last.original);
     }
   }
 }

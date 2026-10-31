@@ -45,6 +45,29 @@ describe('dictionary corrections', () => {
   });
 });
 
+describe('aggressive mode', () => {
+  const e = engine({ mode: 'aggressive' });
+  // Rare words score below the minScore floor; aggressive fixes them anyway
+  // when the slip is plausible and the candidate has no real competition.
+  for (const [typo, expected] of [
+    ['entropyy', 'entropy'],
+    ['timelin', 'timeline'],
+    ['signifant', 'significant'],
+  ]) {
+    test(`${typo} -> ${expected}`, () => assert.equal(correctLast(e, `a ${typo}`), expected));
+  }
+
+  test('rare words stay untouched in balanced mode', () => {
+    assert.equal(correctLast(engine({ mode: 'balanced' }), 'a entropyy'), undefined);
+  });
+
+  test('a lone far-fetched candidate is not taken', () => {
+    // Each is one implausible edit away from a real word ("changeling", "Ethereal").
+    assert.equal(correctLast(e, 'a changelog'), undefined);
+    assert.equal(correctLast(e, 'Ethereum'), undefined);
+  });
+});
+
 describe('profanity', () => {
   const e = engine();
   test('swear words are never corrected away', () => {

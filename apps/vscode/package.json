@@ -70,11 +70,13 @@
           "type": "string",
           "enum": [
             "conservative",
-            "balanced"
+            "balanced",
+            "aggressive"
           ],
           "enumDescriptions": [
             "Only fix single-slip typos with a clear winner.",
-            "Also fix two-slip typos and closer calls. More fixes, more false corrections."
+            "Also fix two-slip typos and closer calls. More fixes, more false corrections.",
+            "Also fix rare words when one plausible candidate is the clear winner. Most fixes; revert teaches it new words."
           ],
           "default": "conservative"
         },
@@ -96,6 +98,11 @@
           },
           "default": [],
           "description": "Words that should never be corrected."
+        },
+        "autocorrect.learnFromReverts": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "When you revert a correction (undo or the hover's **Revert**), add the word you typed to `#autocorrect.customDictionary#` so it is never corrected again."
         },
         "autocorrect.correctionCue": {
           "type": "string",
