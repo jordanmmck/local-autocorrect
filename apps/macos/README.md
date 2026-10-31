@@ -12,6 +12,9 @@ type `teh ` in Notes, Messages, Slack or a browser and it becomes `the `.
 - On a boundary character (space or punctuation) the word goes to a small
   **Node sidecar** ([sidecar/main.ts](sidecar/main.ts)) that runs the engine
   from `packages/core` unchanged, speaking JSON lines over stdin/stdout.
+  `.` and `:` never trigger a correction — they appear inside URLs, paths and
+  `e.g.` (the same rule as the VS Code extension); the word is checked at the
+  next real boundary with its trailing punctuation split off.
 - A correction is applied espanso-style: synthesize `word length + 1`
   backspaces, then type the replacement plus the boundary character. Injected
   events are tagged so the tap ignores them.

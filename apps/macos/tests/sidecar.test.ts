@@ -47,6 +47,15 @@ test('suppress stops a word from being corrected again', async () => {
   assert.equal(res.replacement, null);
 });
 
+test('setMode changes correction strength', async () => {
+  const miss = await request({ cmd: 'check', word: 'entropyy', before: 'high ', after: ' ' });
+  assert.equal(miss.replacement, null);
+  await request({ cmd: 'setMode', mode: 'aggressive' });
+  const hit = await request({ cmd: 'check', word: 'entropyy', before: 'high ', after: ' ' });
+  assert.equal(hit.replacement, 'entropy');
+  await request({ cmd: 'setMode', mode: 'conservative' });
+});
+
 test('configure sets mode and learned words', async () => {
   const ok = await request({ cmd: 'configure', mode: 'conservative', learnedWords: ['abotu'] });
   assert.equal(ok.ok, true);

@@ -31,6 +31,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         hotKey = HotKey { [weak self] in
             self?.controller.revertLast()
         }
+        if hotKey == nil {
+            NSLog("LocalAutocorrectD: could not register ⌃⌥Z (taken by another app?); revert is menu-only")
+        }
 
         NSWorkspace.shared.notificationCenter.addObserver(
             forName: NSWorkspace.didActivateApplicationNotification, object: nil, queue: .main
@@ -106,7 +109,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
 
         menu.addItem(.separator())
-        let revert = item(title: "Revert Last Correction (⌃⌥Z)", action: controller.canRevert ? #selector(revertLast) : nil)
+        let revert = item(title: hotKey == nil ? "Revert Last Correction" : "Revert Last Correction (⌃⌥Z)", action: controller.canRevert ? #selector(revertLast) : nil)
         menu.addItem(revert)
         menu.addItem(.separator())
         // Quit keeps a nil target so the responder chain delivers it to

@@ -57,9 +57,12 @@ final class Sidecar {
             guard let self else { return }
             self.failPending()
             DispatchQueue.main.async {
-                guard self.ready || proc.terminationStatus != 0 else { return }
+                // Deliberate stop() clears this handler, so any exit that
+                // lands here deserves a report — a clean exit before ready
+                // included, or the menu stays on "starting…" forever.
+                let when = self.ready ? "" : " before it was ready"
                 self.ready = false
-                self.onFatal?("correction engine exited (status \(proc.terminationStatus))")
+                self.onFatal?("correction engine exited\(when) (status \(proc.terminationStatus))")
             }
         }
         stdoutPipe.fileHandleForReading.readabilityHandler = { [weak self] handle in
