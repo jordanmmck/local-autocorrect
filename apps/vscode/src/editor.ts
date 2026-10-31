@@ -125,8 +125,37 @@ export class AutocorrectController implements vscode.Disposable {
         const replaced = new vscode.Range(range.start, range.start.translate(0, correction.replacement.length));
         this.#last = this.#tracker.add(editor.document, replaced, correction.original, correction.replacement);
         this.onDidCorrect.fire(correction);
+        void this.#keepCursorAfterBoundary(editor, replaced, typedEnd, correction);
         return;
       }
+    }
+  }
+
+  /**
+   * Vim-style extensions restore the cursor by absolute offset after an
+   * external edit. When the replacement length differs from the typo's, that
+   * parks the cursor at the boundary's OLD position — "tst " becomes "test| "
+   * — which is exactly `typedEnd` and never where ordinary typing leaves it.
+   * Move it back after the boundary; checked once immediately and once after
+   * the next selection change, since the rogue restore can land after this
+   * edit resolves.
+   */
+  async #keepCursorAfterBoundary(editor: vscode.TextEditor, replaced: vscode.Range, typedEnd: vscode.Position, correction: Correction): Promise<void> {
+    const delta = correction.replacement.length - correction.original.length;
+    if (delta === 0 || typedEnd.line !== replaced.start.line) return;
+    const expected = typedEnd.translate(0, delta);
+    for (let attempt = 0; attempt < 2; attempt++) {
+      if (
+        vscode.window.activeTextEditor === editor &&
+        editor.selections.length === 1 &&
+        editor.selection.isEmpty &&
+        editor.selection.active.isEqual(typedEnd) &&
+        editor.document.getText(replaced) === correction.replacement
+      ) {
+        editor.selection = new vscode.Selection(expected, expected);
+        return;
+      }
+      if (attempt === 0) await selectionSettled(editor);
     }
   }
 
