@@ -6,7 +6,7 @@
   "type": "module",
   "description": "System-wide autocorrect daemon for macOS: a Swift menu-bar app plus a Node sidecar that runs @autocorrect/core.",
   "scripts": {
-    "build": "swift build -c release",
+    "build": "node scripts/build.mjs",
     "pretest": "npm run build -w @autocorrect/core",
     "test": "node --test tests/*.test.ts"
   },
