@@ -11,6 +11,8 @@ describe('MVP acceptance cases', () => {
     ['recieve', 'receive'],
     ['thnk', 'think'],
     ['I woudl', 'would'],
+    ['I want ot', 'to'],
+    ['Ot', 'To'],
   ]) {
     test(`${line} -> ${expected}`, () => assert.equal(correctLast(e, line), expected));
   }
@@ -178,7 +180,7 @@ describe('typo table', () => {
   test('slip keys are non-words and values are words', () => {
     for (const [typo, fix] of Object.entries(TYPO_TABLE)) {
       if (typo in CONTRACTIONS) continue;
-      assert.ok(!lexicon.isKnown(typo), `${typo} is a real word`);
+      assert.ok(!lexicon.isKnown(typo) || lexicon.prior(typo) === 0, `${typo} is a real word`);
       for (const part of fix.split(' ')) assert.ok(lexicon.isKnown(part), `${part} is not in the lexicon`);
     }
   });

@@ -3,8 +3,8 @@
  * high confidence even when the dictionary ranking alone would be too close
  * to call (e.g. "thnk" could be "think" or "thank").
  *
- * Every key must be a non-word and every value a dictionary word; a unit test
- * enforces this.
+ * Every key must be a non-word (or a word too rare to ever be proposed, such
+ * as "ot") and every value a dictionary word; a unit test enforces this.
  */
 const SLIPS: Readonly<Record<string, string>> = {
   abotu: 'about',
@@ -43,6 +43,7 @@ const SLIPS: Readonly<Record<string, string>> = {
   occurence: 'occurrence',
   ofthe: 'of the',
   onyl: 'only',
+  ot: 'to',
   peopel: 'people',
   recieve: 'receive',
   recieved: 'received',
